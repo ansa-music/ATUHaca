@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { CountUp, FadeUp, asText, reducedMotion } from '../components/fx'
+import { AiInsightCard } from '../components/ai/AiCards'
 import { Card, ErrorBox, Kpi, PageTitle, Pill, Spinner, inputCls } from '../components/ui'
 import { useAuth } from '../lib/auth'
 import { kzt, monthEnd, monthKey, monthLabel, num } from '../lib/format'
@@ -131,14 +132,16 @@ export default function DashboardPage() {
 
       {rows.length === 0 ? <Card>{L('За выбранный период принятых данных нет.', 'Таңдалған кезеңде қабылданған дерек жоқ.')}</Card> : (
         <>
-          <div className="fx-hero fx-fade-up">
-            <div className="text-xs font-semibold uppercase tracking-wide text-white/70">{L('Главное за период', 'Кезеңнің басты қорытындысы')}</div>
-            <p className="mt-1 text-lg font-bold leading-snug sm:text-xl">
-              {L(`Предотвратимых отходов — ${num(share(m.tot.avoidable, m.tot.mass), 0)}%: это ${num(m.tot.avoidable)} кг и около ${kzt(m.tot.cost)} за период`,
-                `Алдын алуға болатын қалдық — ${num(share(m.tot.avoidable, m.tot.mass), 0)}%: бұл ${num(m.tot.avoidable)} кг және кезең ішінде шамамен ${kzt(m.tot.cost)}`)}
-            </p>
-            <p className="mt-1 text-sm text-white/80">{L(`Углеродный след всех отходов — ${num(m.tot.co2 / 1000, 2)} т CO₂-экв.`, `Барлық қалдықтың көміртек ізі — ${num(m.tot.co2 / 1000, 2)} т CO₂-бал.`)}</p>
-          </div>
+          <AiInsightCard from={`${f}-01`} to={monthEnd(t || f)} orgId={org || undefined} fallback={
+            <div className="fx-hero fx-fade-up">
+              <div className="text-xs font-semibold uppercase tracking-wide text-white/70">{L('Главное за период', 'Кезеңнің басты қорытындысы')}</div>
+              <p className="mt-1 text-lg font-bold leading-snug sm:text-xl">
+                {L(`Предотвратимых отходов — ${num(share(m.tot.avoidable, m.tot.mass), 0)}%: это ${num(m.tot.avoidable)} кг и около ${kzt(m.tot.cost)} за период`,
+                  `Алдын алуға болатын қалдық — ${num(share(m.tot.avoidable, m.tot.mass), 0)}%: бұл ${num(m.tot.avoidable)} кг және кезең ішінде шамамен ${kzt(m.tot.cost)}`)}
+              </p>
+              <p className="mt-1 text-sm text-white/80">{L(`Углеродный след всех отходов — ${num(m.tot.co2 / 1000, 2)} т CO₂-экв.`, `Барлық қалдықтың көміртек ізі — ${num(m.tot.co2 / 1000, 2)} т CO₂-бал.`)}</p>
+            </div>
+          } />
 
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <FadeUp i={1} className="grid"><Kpi label={L('Всего отходов', 'Барлық қалдық')} value={m.tot.mass >= 1000 ? roll(m.tot.mass / 1000, 2, ' т') : rollKg(m.tot.mass)} sub={`${m.tot.count} ${L('взвешиваний', 'өлшеу')}`} /></FadeUp>

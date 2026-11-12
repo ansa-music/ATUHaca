@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Btn, Card, ErrorBox, Field, inputCls } from '../components/ui'
+import { Icon, Logo } from '../components/Icon'
 import { LangSwitch } from '../components/Layout'
 import { useLang } from '../lib/i18n'
 import { errText, isConfigured, supabase } from '../lib/supabase'
@@ -45,16 +46,21 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-brand-800">
-      <div className="flex justify-end p-4"><LangSwitch /></div>
+    <div className="brand-surface on-dark flex min-h-full flex-col">
+      <div className="flex items-center justify-between p-4">
+        <Link to="/" className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-white/80 transition-colors hover:text-white">
+          <Icon name="arrowLeft" size={16} /> {L('О проекте', 'Жоба туралы')}
+        </Link>
+        <LangSwitch />
+      </div>
       <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-4 pb-10">
-        <div className="mb-6 text-center text-white">
-          <div className="mx-auto mb-3 grid h-16 w-16 place-items-center rounded-2xl bg-wheat text-4xl shadow-lg">🌾</div>
+        <div className="animate-fade-up mb-6 text-center text-white">
+          <div className="mb-3 flex justify-center"><Logo size={64} className="shadow-lg" /></div>
           <h1 className="text-4xl font-bold tracking-tight">Qadir</h1>
           <p className="mt-1 text-white/80">{L('Нанның қадірі — учёт и сокращение пищевых отходов АТУ', 'Нанның қадірі — АТУ тағам қалдықтарын есепке алу және азайту')}</p>
         </div>
 
-        <Card>
+        <Card className="animate-fade-up !p-5 shadow-lift">
           {!isConfigured && (
             <div className="mb-3"><ErrorBox>{L('Не задано подключение к Supabase: заполните .env.local', 'Supabase қосылымы берілмеген: .env.local толтырыңыз')}</ErrorBox></div>
           )}
@@ -82,7 +88,7 @@ export default function Login() {
               {mode === 'in' ? L('Войти', 'Кіру') : L('Зарегистрироваться', 'Тіркелу')}
             </Btn>
           </form>
-          <button className="mt-3 w-full text-center text-sm text-brand-700" onClick={() => { setMode(mode === 'in' ? 'up' : 'in'); setError('') }}>
+          <button type="button" className="mt-3 w-full rounded-lg py-1 text-center text-sm font-medium text-brand-700 transition-colors hover:text-brand-900" onClick={() => { setMode(mode === 'in' ? 'up' : 'in'); setError('') }}>
             {mode === 'in' ? L('Нет учётной записи? Регистрация', 'Тіркелгі жоқ па? Тіркелу') : L('Уже есть учётная запись? Войти', 'Тіркелгі бар ма? Кіру')}
           </button>
           {mode === 'up' && (

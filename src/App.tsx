@@ -17,6 +17,7 @@ import OffersPage from './pages/Offers'
 import RegistryPage from './pages/Registry'
 import ReportsPage from './pages/Reports'
 import RescuePage from './pages/Rescue'
+import PitchPage from './pages/Pitch'
 import { ReviewDetail, ReviewList } from './pages/Review'
 import ScaleSim from './pages/ScaleSim'
 import SdgPage from './pages/Sdg'
@@ -93,6 +94,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginRoute />} />
         <Route path="/rescue" element={<RescuePage />} />
+        <Route path="/pitch" element={<PitchPage />} />
         <Route path="/scale-sim" element={<ScaleSim />} />
         <Route path="/" element={<Home />} />
         <Route path="/live" element={<LiveRoute />} />

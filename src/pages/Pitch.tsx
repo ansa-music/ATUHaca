@@ -50,7 +50,9 @@ const Bullet = ({ children, dark }: { children: ReactNode; dark?: boolean }) => 
 export default function Pitch() {
   const [i, setI] = useState(0)
   const [stats, setStats] = useState<Stats | null>(null)
-  const [printing, setPrinting] = useState(false)
+  // ?print=1 — все слайды подряд (для сохранения в PDF без диалога, например headless-браузером).
+  const printParam = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('print')
+  const [printing, setPrinting] = useState(printParam)
 
   useEffect(() => {
     supabase.rpc('public_stats').then(({ data }) => { if (data) setStats(data as Stats) })
@@ -391,7 +393,7 @@ export default function Pitch() {
   if (printing) {
     return (
       <div className="pitch-print">
-        <style>{`@page { size: 16in 9in; margin: 0 } body { margin: 0 } .pitch-print .pitch-slide { width: 16in; height: 9in; page-break-after: always; break-after: page } .pitch-video { display: none }`}</style>
+        <style>{`@page { size: 16in 9in; margin: 0 } body { margin: 0 } .pitch-print .pitch-slide { width: 16in; height: 9in; page-break-after: always; break-after: page }`}</style>
         {slides.map((_, k) => <Slide key={k} k={k} />)}
       </div>
     )

@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { QRCodeSVG } from 'qrcode.react'
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
+import { VOICE } from './pitchVoice'
 
 /**
  * Презентация Qadir для защиты — 12 слайдов 16:9 по структуре п. 11.5 регламента.
@@ -370,9 +371,64 @@ export default function Pitch() {
     setTimeout(() => { window.print(); setPrinting(false) }, 400)
   }, [])
 
+  // ── Автопоказ с озвучкой: диктор читает слайд, по окончании — следующий слайд. ──
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [auto, setAuto] = useState(false)          // озвучка включена
+  const [started, setStarted] = useState(() => new URLSearchParams(window.location.search).has('slide') || printParam)
+  const [waiting, setWaiting] = useState(false)    // пауза на живое демо
+  const [playing, setPlaying] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [subs, setSubs] = useState(true)
+
+  useEffect(() => {
+    const a = audioRef.current
+    if (!a || !auto) return
+    setWaiting(false); setProgress(0)
+    a.src = `/pitch/voice/${i + 1}.mp3`
+    const t = setTimeout(() => { a.play().catch(() => setPlaying(false)) }, 700)
+    return () => { clearTimeout(t); a.pause() }
+  }, [i, auto])
+
+  // Нет аудиофайла — ведём субтитры по таймеру (≈ скорость речи диктора), показ не останавливается.
+  const fallbackRef = useRef<number | null>(null)
+  useEffect(() => () => { if (fallbackRef.current) clearInterval(fallbackRef.current) }, [i])
+  const onAudioError = () => {
+    if (!auto || !VOICE[i]) return
+    const total = Math.max(4000, VOICE[i].sub.length * 62)
+    const t0 = Date.now()
+    if (fallbackRef.current) clearInterval(fallbackRef.current)
+    fallbackRef.current = window.setInterval(() => {
+      const p = Math.min(1, (Date.now() - t0) / total)
+      setProgress(p)
+      if (p >= 1) { clearInterval(fallbackRef.current!); fallbackRef.current = null; onEnded() }
+    }, 100)
+  }
+
+  const onEnded = () => {
+    setPlaying(false); setProgress(1)
+    if (VOICE[i]?.pause) { setWaiting(true); return }
+    if (i < n - 1) setTimeout(() => go(1), 900)
+  }
+
+  const start = (withVoice: boolean) => {
+    VOICE.forEach((_, k) => { fetch(`/pitch/voice/${k + 1}.mp3`).catch(() => {}) })
+    slides.forEach((sl) => { if (sl.video) fetch(sl.video).catch(() => {}) })
+    setI(0); setAuto(withVoice); setStarted(true)
+    document.documentElement.requestFullscreen?.().catch(() => {})
+  }
+
+  const togglePlay = useCallback(() => {
+    const a = audioRef.current
+    if (!a || !auto) return go(1)
+    if (waiting) { setWaiting(false); go(1); return }
+    if (a.paused) a.play().catch(() => {}); else a.pause()
+  }, [auto, waiting, go])
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); go(1) }
+      if (e.key === ' ') { e.preventDefault(); togglePlay() }
+      else if (e.key.toLowerCase() === 's') setSubs((x) => !x)
+      else if (['ArrowRight', 'PageDown'].includes(e.key)) { e.preventDefault(); go(1) }
       else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); go(-1) }
       else if (e.key === 'Home') setI(0)
       else if (e.key === 'End') setI(n - 1)
@@ -381,7 +437,7 @@ export default function Pitch() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [go, n, printAll])
+  }, [go, n, printAll, togglePlay])
 
   const Slide = ({ k }: { k: number }) => (
     <div className="pitch-slide relative aspect-video w-full overflow-hidden" style={{ background: C.bg, containerType: 'inline-size', fontFamily: 'Inter, system-ui, sans-serif' }}>
@@ -412,10 +468,59 @@ export default function Pitch() {
         </AnimatePresence>
         <button aria-label="Назад" className="absolute inset-y-0 left-0 w-[12%] cursor-w-resize" onClick={() => go(-1)} />
         <button aria-label="Вперёд" className="absolute inset-y-0 right-0 w-[12%] cursor-e-resize" onClick={() => go(1)} />
-        <div className="absolute left-0 right-0 top-0 h-[3px] bg-white/10"><div className="h-full transition-all" style={{ width: `${((i + 1) / n) * 100}%`, background: C.yellow }} /></div>
+        <div className="absolute left-0 right-0 top-0 h-[3px] bg-white/10">
+          <div className="h-full transition-all" style={{ width: `${((i + (auto ? progress : 1)) / n) * 100}%`, background: C.yellow }} />
+        </div>
+
+        {/* Субтитры: слова подсвечиваются по ходу речи */}
+        {auto && subs && VOICE[i] && (
+          <div className="pointer-events-none absolute inset-x-[6%] bottom-[5%] flex justify-center">
+            <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+              className="max-w-[90%] rounded-2xl bg-black/70 px-[1.6vw] py-[0.8vw] text-center font-semibold leading-snug backdrop-blur-sm"
+              style={{ fontSize: 'clamp(13px, 1.35vw, 26px)' }}>
+              {VOICE[i].sub.split(' ').map((w, k, all) => (
+                <span key={k} style={{ color: k < Math.ceil(progress * all.length) ? '#fff' : 'rgba(255,255,255,.45)', transition: 'color .2s' }}>{w} </span>
+              ))}
+            </motion.div>
+          </div>
+        )}
+
+        {/* Пауза на живое демо */}
+        {auto && waiting && (
+          <motion.button initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} onClick={togglePlay}
+            className="absolute bottom-[5%] left-1/2 -translate-x-1/2 rounded-full px-6 py-3 font-bold shadow-xl"
+            style={{ background: C.yellow, color: C.ink, fontSize: 'clamp(13px, 1.3vw, 24px)' }}>
+            🎤 Тірі демо · жалғастыру — пробел ▶
+          </motion.button>
+        )}
       </div>
+
+      <audio ref={audioRef} preload="auto" onEnded={onEnded} onError={onAudioError} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}
+        onTimeUpdate={(e) => { const a = e.currentTarget; if (a.duration) setProgress(a.currentTime / a.duration) }} />
+
+      {/* Стартовый экран: один клик — браузер разрешает звук только после действия пользователя */}
+      <AnimatePresence>
+        {!started && (
+          <motion.div exit={{ opacity: 0 }} transition={{ duration: 0.5 }} className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-[#1a1404]/85 backdrop-blur-sm">
+            <img src="/logo.png" alt="" className="h-24 w-24" />
+            <div className="text-center text-white">
+              <div className="text-4xl font-black">Qadir</div>
+              <div className="mt-1 text-white/70">Нанның қадірі — уважение к хлебу</div>
+            </div>
+            <motion.button onClick={() => start(true)} animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 1.8 }}
+              className="rounded-full px-10 py-5 text-2xl font-extrabold shadow-2xl" style={{ background: C.yellow, color: C.ink }}>
+              ▶ Бастау · Начать показ
+            </motion.button>
+            <button onClick={() => start(false)} className="text-sm text-white/60 underline">без озвучки</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="fixed bottom-3 left-1/2 flex -translate-x-1/2 gap-2 rounded-full bg-black/60 px-3 py-1.5 text-xs text-white/80 opacity-30 transition hover:opacity-100">
         <button onClick={() => go(-1)}>←</button><span>{i + 1}/{n}</span><button onClick={() => go(1)}>→</button>
+        {auto && <button onClick={togglePlay}>{playing ? '⏸ Пауза' : '▶ Звук'} (пробел)</button>}
+        <button onClick={() => setAuto((x) => !x)}>{auto ? '🔇 Выкл. голос' : '🔊 Вкл. голос'}</button>
+        {auto && <button onClick={() => setSubs((x) => !x)}>Субтитры (S)</button>}
         <button onClick={() => document.documentElement.requestFullscreen?.()}>Полный экран (F)</button>
         <button onClick={printAll}>PDF (P)</button>
       </div>

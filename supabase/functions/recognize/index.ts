@@ -19,8 +19,18 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
-  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+  // При вставке ключа в секреты легко захватить пробел, перенос строки или невидимый символ — убираем их.
+  // Берём первый корректный ключ: ANTHROPIC_API_KEY2 (запасной), затем ANTHROPIC_API_KEY.
+  const keys = ["ANTHROPIC_API_KEY2", "ANTHROPIC_API_KEY"]
+    .map((name) => (Deno.env.get(name) ?? "").replace(/[\s\u200B-\u200F\u2060\uFEFF"'«»]/g, ""))
+    .filter(Boolean);
+  const apiKey = keys.find((k) => !/[^\x21-\x7E]/.test(k)) ?? keys[0] ?? "";
   if (!apiKey) return json({ error: "not_configured" }, 503);
+  if (/[^\x21-\x7E]/.test(apiKey)) {
+    // Сам ключ не раскрываем: только длину и позиции недопустимых символов.
+    const bad = [...apiKey].map((ch, i) => (/[^\x21-\x7E]/.test(ch) ? i : -1)).filter((i) => i >= 0);
+    return json({ error: "bad_key_format", length: apiKey.length, bad_positions: bad.slice(0, 10) }, 503);
+  }
 
   let image: string, types: { id: string; name: string }[];
   try {
@@ -82,6 +92,7 @@ Deno.serve(async (req: Request) => {
       note_ru: out.note_ru,
     });
   } catch (e) {
+    console.error("recognize failed:", e);
     if (e instanceof Anthropic.RateLimitError) return json({ error: "rate_limited" }, 429);
     if (e instanceof Anthropic.AuthenticationError) return json({ error: "bad_api_key" }, 502);
     if (e instanceof Anthropic.APIError) return json({ error: "api_error", status: e.status }, 502);

@@ -30,11 +30,20 @@ export default function Automations() {
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
   const [result, setResult] = useState('')
+  const [auto, setAuto] = useState<{ enabled: boolean; threshold: number } | null>(null)
 
   const load = useCallback(async () => {
     const { data } = await supabase.from('automation_runs').select('*').order('ran_at', { ascending: false }).limit(40)
     setRuns((data ?? []) as Run[])
+    const { data: cfg } = await supabase.from('app_settings').select('value').eq('key', 'auto_accept').maybeSingle()
+    if (cfg?.value) setAuto(cfg.value as { enabled: boolean; threshold: number })
   }, [])
+
+  async function saveAuto(next: { enabled: boolean; threshold: number }) {
+    setAuto(next); setError('')
+    const { error } = await supabase.from('app_settings').update({ value: next, updated_at: new Date().toISOString() }).eq('key', 'auto_accept')
+    if (error) setError(errText(error))
+  }
   useEffect(() => { load() }, [load])
 
   async function run(job: Job) {
@@ -58,6 +67,22 @@ export default function Automations() {
       </Card>
       <ErrorBox>{error}</ErrorBox>
       {result && <div className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 ring-1 ring-emerald-200">{result}</div>}
+
+      {auto && (
+        <Card className="flex flex-wrap items-center gap-3">
+          <span className="text-2xl leading-none">🤖</span>
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold">{L('Автоприёмка честных отчётов', 'Сенімді есептерді автоқабылдау')}</div>
+            <p className="text-sm text-slate-600">{L(`Отчёт принимается сам сразу после отправки, если индекс достоверности не ниже ${auto.threshold}. Подозрительные отчёты всё равно идут к проверяющему.`, `Сенімділік индексі ${auto.threshold}-ден төмен болмаса, есеп жіберілгеннен кейін бірден қабылданады. Күдікті есептер бәрібір тексерушіге барады.`)}</p>
+          </div>
+          <select className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm" value={auto.threshold} onChange={(e) => saveAuto({ ...auto, threshold: Number(e.target.value) })}>
+            {[80, 85, 90, 95].map((t) => <option key={t} value={t}>{L('порог', 'шегі')} {t}</option>)}
+          </select>
+          <Btn size="sm" variant={auto.enabled ? 'primary' : 'ghost'} onClick={() => saveAuto({ ...auto, enabled: !auto.enabled })}>
+            {auto.enabled ? L('Включена', 'Қосулы') : L('Выключена', 'Өшірулі')}
+          </Btn>
+        </Card>
+      )}
 
       <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">{L('По расписанию', 'Кесте бойынша')}</h2>
       <div className="grid gap-3 md:grid-cols-2">

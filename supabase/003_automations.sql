@@ -458,3 +458,42 @@ select cron.schedule('qadir-weekly-digest',   '0 4 * * 1',    $$select public.au
 
 -- Индекс достоверности для уже существующих отчётов.
 update public.reports set trust_score = public.report_trust(id) where status <> 'draft';
+
+-- ---------- Автоприёмка отчётов (по умолчанию выключена, включает администратор) ----------
+
+create table if not exists public.app_settings (
+  key text primary key,
+  value jsonb not null,
+  updated_at timestamptz not null default now()
+);
+alter table public.app_settings enable row level security;
+drop policy if exists settings_read on public.app_settings;
+create policy settings_read on public.app_settings for select to authenticated using (true);
+drop policy if exists settings_admin on public.app_settings;
+create policy settings_admin on public.app_settings for all to authenticated
+  using (public.my_role() = 'admin') with check (public.my_role() = 'admin');
+insert into public.app_settings (key, value) values ('auto_accept', '{"enabled": false, "threshold": 90}')
+on conflict (key) do nothing;
+
+-- Если включена и индекс достоверности не ниже порога, отчёт принимается сразу после отправки.
+create or replace function public.on_report_submitted() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare v_cfg jsonb; v_score int; v_threshold int;
+begin
+  if public._is_seeding() then return new; end if;
+  if new.status <> 'submitted' or old.status = 'submitted' then return new; end if;
+  select value into v_cfg from public.app_settings where key = 'auto_accept';
+  if v_cfg is null or not coalesce((v_cfg ->> 'enabled')::boolean, false) then return new; end if;
+  v_threshold := coalesce((v_cfg ->> 'threshold')::int, 90);
+  v_score := coalesce(new.trust_score, public.report_trust(new.id));
+  if v_score < v_threshold then return new; end if;
+  insert into public.status_history (report_id, from_status, to_status, user_id, comment)
+  values (new.id, 'submitted', 'accepted', null,
+    'Принято автоматически: индекс достоверности ' || v_score || ' (порог ' || v_threshold || ')');
+  update public.reports set status = 'accepted', decided_at = now(), trust_score = v_score where id = new.id;
+  return new;
+end $$;
+revoke all on function public.on_report_submitted() from public, anon, authenticated;
+drop trigger if exists report_auto_accept on public.reports;
+create trigger report_auto_accept after update of status on public.reports
+  for each row execute function public.on_report_submitted();

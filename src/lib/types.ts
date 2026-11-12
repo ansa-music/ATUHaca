@@ -67,6 +67,7 @@ export interface Entry {
   user_id: string | null
   has_photo: boolean
   source: 'manual' | 'photo' | 'scale'
+  qty_estimated?: boolean
   created_at: string
 }
 

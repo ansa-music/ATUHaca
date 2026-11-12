@@ -62,6 +62,8 @@ export default function EntryPage() {
 
   const defaultDate = isCurrentMonth ? today() : monthEnd(month)
   const [form, setForm] = useState<Draft>({ typeId: '', qty: '', disposalId: '', reason: '', date: defaultDate })
+  // Вес, оценённый ИИ по фото: подставлен в поле, помечается в записи, пока человек его не изменит.
+  const [qtyEst, setQtyEst] = useState<{ basis: string } | null>(null)
   const [photo, setPhoto] = useState('')
   const [source, setSource] = useState<Entry['source']>('manual')
   const [editingId, setEditingId] = useState('')
@@ -227,11 +229,20 @@ export default function EntryPage() {
       const next = scale ? L('Вес с весов сохраню сам через 5 секунд.', 'Таразы салмағын 5 секундтан кейін өзім сақтаймын.') : L('Введите вес и нажмите «Сохранить».', 'Салмағын енгізіп, «Сақтау» басыңыз.')
       if (hit) {
         pickType(hit, ai.reason); setSource('photo')
+        const est = !scale && ai.quantity_estimate && ai.quantity_estimate > 0 ? ai.quantity_estimate : null
+        if (est) {
+          setForm((f) => ({ ...f, qty: String(est).replace('.', ',') }))
+          setQtyEst({ basis: ai.estimate_basis_ru?.trim() ?? '' })
+        }
+        const unitTxt = hit.unit === 'l' ? L('л', 'л') : L('кг', 'кг')
+        const next2 = est
+          ? L(`Вес ≈ ${String(est).replace('.', ',')} ${unitTxt} — оценка ИИ. Проверьте, при необходимости исправьте и нажмите «Сохранить».`, `Салмағы ≈ ${String(est).replace('.', ',')} ${unitTxt} — ЖИ бағасы. Тексеріп, қажет болса түзетіп, «Сақтау» басыңыз.`)
+          : next
         const sure = ai.confidence === 'high'
         setAiNote({
           tone: sure ? 'good' : 'warn',
-          text: L(`ИИ определил: «${hit.name_ru}»${created ? ' — новый вид, добавил в список' : ''}${sure ? '' : ' (не уверен — проверьте)'}. ${note ? `${note}. ` : ''}${next}`,
-            `ЖИ анықтады: «${hit.name_kk}»${created ? ' — жаңа түр, тізімге қостым' : ''}${sure ? '' : ' (сенімсіз — тексеріңіз)'}. ${next}`),
+          text: L(`ИИ определил: «${hit.name_ru}»${created ? ' — новый вид, добавил в список' : ''}${sure ? '' : ' (не уверен — проверьте)'}. ${note ? `${note}. ` : ''}${next2}`,
+            `ЖИ анықтады: «${hit.name_kk}»${created ? ' — жаңа түр, тізімге қостым' : ''}${sure ? '' : ' (сенімсіз — тексеріңіз)'}. ${next2}`),
         })
         setTimeout(() => formRef.current?.querySelector<HTMLInputElement>('input[inputmode="decimal"]')?.focus(), 50)
       } else {
@@ -314,7 +325,7 @@ export default function EntryPage() {
 
   function reset() {
     setForm({ typeId: '', qty: '', disposalId: '', reason: '', date: form.date })
-    setPhoto(''); setEditingId(''); setSource('manual'); setAiNote(null)
+    setPhoto(''); setEditingId(''); setSource('manual'); setAiNote(null); setQtyEst(null)
     try { localStorage.removeItem(draftKey) } catch { /* хранилище недоступно */ }
   }
 
@@ -340,6 +351,7 @@ export default function EntryPage() {
       const row = {
         report_id: report.id, org_id: org.id, entry_date: form.date, waste_type_id: form.typeId, quantity: qty,
         disposal_id: disposalId, reason: form.reason || null, source: src, has_photo: Boolean(photo) || undefined,
+        qty_estimated: Boolean(qtyEst) && !fromScale,
       }
       if (editingId) {
         const { error } = await supabase.from('entries').update(row).eq('id', editingId)
@@ -387,6 +399,7 @@ export default function EntryPage() {
 
   function edit(e: Entry) {
     setEditingId(e.id); setPhoto(''); setSource(e.source); setBatch(null)
+    setQtyEst(e.qty_estimated ? { basis: '' } : null)
     setForm({ typeId: e.waste_type_id, qty: String(e.quantity), disposalId: e.disposal_id ?? '', reason: e.reason ?? '', date: e.entry_date })
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
@@ -598,8 +611,18 @@ export default function EntryPage() {
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-slate-600">{L('Сколько', 'Қанша')}, {unitLabel(selected?.unit)}</span>
                 <input className={`${inputCls} text-2xl font-bold`} inputMode="decimal" placeholder="0,0" value={form.qty}
-                  onChange={(e) => { setForm({ ...form, qty: e.target.value.replace(/[^0-9.,]/g, '') }); if (source === 'scale') setSource('manual') }} />
+                  onChange={(e) => { setForm({ ...form, qty: e.target.value.replace(/[^0-9.,]/g, '') }); setQtyEst(null); if (source === 'scale') setSource('manual') }} />
               </label>
+              {qtyEst && (
+                <div className="fx-fade-up -mt-1 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200">
+                  <span className="leading-5">🤖</span>
+                  <span>
+                    <b>{L('≈ Вес оценён ИИ по фото', '≈ Салмақты ЖИ фото бойынша бағалады')}</b>
+                    {qtyEst.basis && <span className="text-amber-800">{` · ${qtyEst.basis}`}</span>}
+                    <span className="block text-xs text-amber-800">{L('Это примерная оценка. Можно изменить — просто введите точный вес. В отчёте запись будет помечена как «оценка ИИ».', 'Бұл шамамен бағалау. Өзгертуге болады — нақты салмақты енгізіңіз. Есепте жазба «ЖИ бағасы» деп белгіленеді.')}</span>
+                  </span>
+                </div>
+              )}
 
               <div>
                 <button className="text-sm text-slate-500 underline decoration-dotted underline-offset-4" onClick={() => setMore(!more)} aria-expanded={more}>
@@ -693,7 +716,7 @@ export default function EntryPage() {
                 <div className="truncate text-sm font-medium">{name(t)}</div>
                 <div className="truncate text-xs text-slate-500">
                   {name(disposals.find((d) => d.id === e.disposal_id))}
-                  {e.has_photo && ' · 📷'}{e.source === 'scale' && ' · ⚖️'}{e.source === 'photo' && ' · ИИ'}
+                  {e.has_photo && ' · 📷'}{e.source === 'scale' && ' · ⚖️'}{e.source === 'photo' && ' · ИИ'}{e.qty_estimated && L(' · ≈ вес оценён ИИ', ' · ≈ салмақ ЖИ бағасы')}
                 </div>
               </div>
               <div className="font-bold tabular-nums">{num(Number(e.quantity), 2)} {unitLabel(t?.unit)}</div>

@@ -1,5 +1,5 @@
 // Qadir — ИИ-помощник на Claude API. Один вход, пять режимов:
-//   recognize      — фото отходов → вид отхода, причина, новый вид при необходимости
+//   recognize      — фото отходов → вид отхода, примерный вес, причина, новый вид при необходимости
 //   parse_text     — фраза «хлеб 3 кг, гарнир 2,5» (или голос) → записи
 //   parse_journal  — фото бумажного журнала → записи с датами
 //   review         — заключение для проверяющего по отчёту
@@ -98,8 +98,8 @@ function normEntry(e: Record<string, unknown>) {
 const RULES =
   "Ты помогаешь сотрудникам столовых, кофейни, гостиницы и учебных лабораторий университета АТУ (Алматы) учитывать пищевые отходы. " +
   "Выбирай вид отхода только из списка организации. Новый вид (new) предлагай, только если отход явно есть, а подходящего вида в списке нет. " +
-  "Причины: overproduction — приготовили больше, чем продали; expired — истёк срок; spoilage — порча; plate — остатки с тарелок; trimmings — очистки и обрезки при готовке. " +
-  "Никогда не выдумывай вес: если его не видно и не сказано, ставь 0.";
+  "Причины: overproduction — приготовили больше, чем продали; expired — истёк срок; spoilage — порча; plate — остатки с тарелок; trimmings — очистки и обрезки при готовке.";
+const NO_GUESS = " Никогда не выдумывай вес: если его не видно и не сказано, ставь 0.";
 
 async function recognize(client: Anthropic, body: Record<string, unknown>) {
   const img = imageBlock(body.image);
@@ -107,21 +107,26 @@ async function recognize(client: Anthropic, body: Record<string, unknown>) {
   if (!img || !list.length) return json({ error: "bad_request" }, 400);
   const out = await ask(client, {
     effort: "low", maxTokens: 1024,
-    system: RULES + " По фото контейнера, бака или подноса определи вид отхода. Если отходов на фото нет — unknown. note_ru — одна короткая фраза, что видно на фото.",
+    system: RULES + " По фото контейнера, бака или подноса определи вид отхода. Если отходов на фото нет — unknown. note_ru — одна короткая фраза, что видно на фото. " +
+      "Также оцени ПРИМЕРНЫЙ вес отходов на фото в единицах вида (кг или л) — по размеру и заполненности посуды, бака, ведра, пакета или подноса и типичной плотности продукта. " +
+      "Ориентиры: полное ведро 10 л с очистками ≈ 4–5 кг; гастроёмкость GN 1/1 с остатками еды ≈ 3–6 кг; тарелка с недоеденным гарниром ≈ 0,2–0,3 кг; буханка хлеба ≈ 0,5 кг; стакан кофейного жмыха ≈ 0,1 кг. " +
+      "Округляй до 0,1. Если оценить нельзя — 0. estimate_basis_ru — коротко, из чего получена оценка (например «полведра 10 л очисток»).",
     content: [img, { type: "text", text: "Виды отходов организации:\n" + typeList(list) }],
     schema: {
       type: "object",
       properties: {
         ...(entrySchema(list, false).properties as Record<string, unknown>),
+        quantity: { type: "number", description: "Примерный вес (кг) или объём (л) отходов на фото; 0, если оценить нельзя" },
+        estimate_basis_ru: { type: "string" },
         confidence: { type: "string", enum: ["high", "medium", "low"] },
         note_ru: { type: "string" },
       },
-      required: ["waste_type_id", "new_type_name", "new_type_category", "quantity", "reason", "confidence", "note_ru"],
+      required: ["waste_type_id", "new_type_name", "new_type_category", "quantity", "estimate_basis_ru", "reason", "confidence", "note_ru"],
       additionalProperties: false,
     },
   });
   const e = normEntry(out);
-  return json({ ...e, quantity: undefined, confidence: out.confidence, note_ru: out.note_ru });
+  return json({ ...e, quantity: undefined, quantity_estimate: e.quantity, estimate_basis_ru: e.quantity ? String(out.estimate_basis_ru ?? "") : "", confidence: out.confidence, note_ru: out.note_ru });
 }
 
 async function parseEntries(client: Anthropic, body: Record<string, unknown>, journal: boolean) {
@@ -140,7 +145,7 @@ async function parseEntries(client: Anthropic, body: Record<string, unknown>, jo
   content.push({ type: "text", text: "Виды отходов организации:\n" + typeList(list) + (journal ? `\nТекущий год: ${new Date().getFullYear()}.` : "") });
   const out = await ask(client, {
     effort: "low",
-    system: RULES + (journal
+    system: RULES + NO_GUESS + (journal
       ? " На фото — заполненный от руки или напечатанный журнал учёта пищевых отходов (дата, наименование, вес/объём, способ утилизации). Перепиши каждую строку журнала в отдельную запись. Итоговые строки («итого», «всего») пропускай. Даты переводи в YYYY-MM-DD."
       : " Разбери фразу (русский или казахский, возможно с ошибками распознавания речи) на отдельные записи: вид отхода и количество. «келі» — килограмм, «литр» — литр."),
     content,
@@ -165,7 +170,7 @@ async function review(client: Anthropic, db: SupabaseClient, body: Record<string
   const from = new Date(rep.period_start + "T00:00:00Z"); from.setUTCMonth(from.getUTCMonth() - 3);
   const [{ data: org }, { data: entries }, { data: types }, { data: hist }] = await Promise.all([
     db.from("organizations").select("name_ru,type").eq("id", rep.org_id).maybeSingle(),
-    db.from("entries").select("entry_date,waste_type_id,quantity,created_at,has_photo,source").eq("report_id", id).limit(3000),
+    db.from("entries").select("entry_date,waste_type_id,quantity,created_at,has_photo,source,qty_estimated").eq("report_id", id).limit(3000),
     db.from("waste_types").select("id,name_ru,unit"),
     db.from("registry").select("waste_type_id,quantity,entry_date").eq("org_id", rep.org_id)
       .gte("entry_date", ymd(from)).lt("entry_date", rep.period_start).limit(5000),
@@ -206,7 +211,7 @@ async function review(client: Anthropic, db: SupabaseClient, body: Record<string
     `Индекс достоверности (0–100, автоматический): ${rep.trust_score ?? "не рассчитан"}.`,
     `Записей: ${n}. Внесено позже чем через 3 дня после взвешивания: ${n ? Math.round((late / n) * 100) : 0}%.`,
     `Больше всего записей внесено в течение одного часа: ${burst}. Целых (круглых) значений: ${n ? Math.round((round / n) * 100) : 0}%.`,
-    `Записей с фото: ${list.filter((e) => e.has_photo).length}; с электронных весов: ${list.filter((e) => e.source === "scale").length}.`,
+    `Записей с фото: ${list.filter((e) => e.has_photo).length}; с электронных весов: ${list.filter((e) => e.source === "scale").length}; вес оценён ИИ по фото без взвешивания: ${list.filter((e) => e.qty_estimated).length}.`,
     org?.type === "lab" ? "Это учебная лаборатория: записи только в дни занятий, пропуски дней — норма." : `Рабочие дни без записей: ${missing.length ? missing.join(", ") : "нет"}.`,
     "По видам отходов:", ...typeLines,
   ].join("\n");
@@ -214,6 +219,7 @@ async function review(client: Anthropic, db: SupabaseClient, body: Record<string
     effort: "low", maxTokens: 2500,
     system: "Ты помогаешь проверяющему (эколог, завхоз) решить, принять ли месячный отчёт об отходах точки питания университета. " +
       "Оцени, похоже ли, что журнал вели честно и каждый день: записи пачкой задним числом, круглые и повторяющиеся значения, пропуски рабочих дней, резкие отклонения от обычного — признаки, что журнал заполняли «на глаз». " +
+      "Вес, оценённый ИИ по фото, — приблизительный: если таких записей много, посоветуй взвешивать на весах. " +
       "verdict: accept — замечаний нет или они мелкие; return — есть серьёзные признаки недостоверности, отчёт нужно вернуть; check — сомнительно, нужно посмотреть вручную. " +
       "Пиши простыми короткими фразами, без терминов. comment — вежливый конкретный комментарий для возврата ответственному (что исправить), даже если verdict = accept. Тексты на русском (ru) и казахском (kk).",
     content: [{ type: "text", text: stats }],

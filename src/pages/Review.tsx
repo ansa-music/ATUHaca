@@ -260,7 +260,10 @@ export function ReviewDetail() {
                   <tr key={e.id} className={`border-t border-slate-100 ${f === 'outlier' ? 'bg-rose-50' : f === 'late' ? 'bg-amber-50' : ''}`}>
                     <td className="whitespace-nowrap px-4 py-1.5">{dmy(e.entry_date)}</td>
                     <td className="px-3 py-1.5">{name(types.get(e.waste_type_id))}{e.has_photo && <button className="ml-1" onClick={() => showPhoto(e.id)}>📷</button>}</td>
-                    <td className="whitespace-nowrap px-3 py-1.5 text-right font-semibold tabular-nums">{num(Number(e.quantity), 2)} {unit(e.waste_type_id)}</td>
+                    <td className="whitespace-nowrap px-3 py-1.5 text-right font-semibold tabular-nums">
+                      {e.qty_estimated && <span title={L('Вес оценён ИИ по фото, не взвешен', 'Салмақты ЖИ фото бойынша бағалады')} className="mr-1 rounded bg-amber-100 px-1 text-xs font-medium text-amber-800">≈ ИИ</span>}
+                      {num(Number(e.quantity), 2)} {unit(e.waste_type_id)}
+                    </td>
                     <td className="hidden px-3 py-1.5 text-slate-600 sm:table-cell">{name(e.disposal_id ? disposals.get(e.disposal_id) : null)}</td>
                     <td className="whitespace-nowrap px-4 py-1.5 text-xs text-slate-500">{dateTime(e.created_at)}{f === 'late' && ' ⏱'}{f === 'outlier' && ' ⚠'}</td>
                   </tr>

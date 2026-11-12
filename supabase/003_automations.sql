@@ -497,3 +497,6 @@ revoke all on function public.on_report_submitted() from public, anon, authentic
 drop trigger if exists report_auto_accept on public.reports;
 create trigger report_auto_accept after update of status on public.reports
   for each row execute function public.on_report_submitted();
+
+-- Вес, оценённый ИИ по фото (не взвешивание): помечается, чтобы проверяющий это видел.
+alter table public.entries add column if not exists qty_estimated boolean not null default false;

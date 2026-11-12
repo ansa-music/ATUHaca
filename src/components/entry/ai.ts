@@ -41,6 +41,9 @@ export interface AiRecognize {
   reason: Reason | null
   confidence: 'high' | 'medium' | 'low'
   note_ru: string
+  /** Примерный вес по фото (оценка ИИ, не взвешивание). */
+  quantity_estimate?: number | null
+  estimate_basis_ru?: string
 }
 export interface AiRow {
   entry_date?: string | null

@@ -61,6 +61,7 @@ export default function EntryPage() {
   const [scale, setScale] = useState<{ id: number; weight: number } | null>(null)
   const [newType, setNewType] = useState<{ name: string; unit: 'kg' | 'l'; category: Category } | null>(null)
   const [aiBusy, setAiBusy] = useState(false)
+  const [aiNote, setAiNote] = useState<{ tone: 'good' | 'warn' | 'bad'; text: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const editable = report ? report.status === 'draft' || report.status === 'returned' : false
@@ -141,22 +142,48 @@ export default function EntryPage() {
 
   async function onPhoto(file: File | undefined) {
     if (!file) return
+    setAiNote(null)
+    let data = ''
     try {
-      const data = await compress(file)
+      data = await compress(file)
       setPhoto(data)
-      // ИИ-подсказка вида отхода. Если серверная функция не развёрнута — фото просто прикрепляется.
-      setAiBusy(true)
-      const { data: ai } = await supabase.functions.invoke('recognize', {
+    } catch {
+      setAiNote({ tone: 'bad', text: L('Не удалось прочитать фото. Попробуйте ещё раз.', 'Фотоны оқу мүмкін болмады. Қайталап көріңіз.') })
+      return
+    }
+    // ИИ-подсказка вида отхода: результат всегда показываем, человек подтверждает.
+    setAiBusy(true)
+    try {
+      const { data: ai, error } = await supabase.functions.invoke('recognize', {
         body: { image: data, types: types.map((t) => ({ id: t.id, name: t.name_ru })) },
       })
+      if (error) {
+        let code = ''
+        try { code = (await (error as { context?: Response }).context?.json())?.error ?? '' } catch { /* без кода */ }
+        setAiNote({ tone: 'bad', text: L(`Распознавание сейчас недоступно${code ? ` (${code})` : ''}. Фото прикреплено — выберите вид вручную.`, `Тану қазір қолжетімсіз${code ? ` (${code})` : ''}. Фото тіркелді — түрін қолмен таңдаңыз.`) })
+        return
+      }
+      const note = (ai?.note_ru as string | undefined)?.trim().replace(/[.!\s]+$/, '')
       const hit = ai?.waste_type_id ? typeById.get(ai.waste_type_id as string) : undefined
-      if (hit) { pickType(hit); setSource('photo'); setFlash(L(`ИИ определил: ${hit.name_ru}. Проверьте и укажите вес.`, `ЖИ анықтады: ${hit.name_kk}. Тексеріп, салмағын енгізіңіз.`)) }
-    } catch { /* распознавание недоступно — продолжаем без него */ } finally { setAiBusy(false) }
+      if (hit) {
+        pickType(hit); setSource('photo')
+        const sure = ai?.confidence === 'high'
+        setAiNote({
+          tone: sure ? 'good' : 'warn',
+          text: L(`ИИ определил: «${hit.name_ru}»${sure ? '' : ' (не уверен — проверьте)'}. ${note ? `${note}. ` : ''}Укажите вес.`,
+            `ЖИ анықтады: «${hit.name_kk}»${sure ? '' : ' (сенімсіз — тексеріңіз)'}. Салмағын енгізіңіз.`),
+        })
+      } else {
+        setAiNote({ tone: 'warn', text: L(`ИИ не узнал вид отхода${note ? `: ${note}` : ''}. Фото прикреплено — выберите плитку вручную.`, 'ЖИ қалдық түрін танымады. Фото тіркелді — түрін қолмен таңдаңыз.') })
+      }
+    } catch {
+      setAiNote({ tone: 'bad', text: L('Нет связи с распознаванием. Фото прикреплено — выберите вид вручную.', 'Танумен байланыс жоқ. Фото тіркелді — түрін қолмен таңдаңыз.') })
+    } finally { setAiBusy(false) }
   }
 
   function reset() {
     setForm({ typeId: '', qty: '', disposalId: '', reason: '', date: form.date })
-    setPhoto(''); setEditingId(''); setSource('manual')
+    setPhoto(''); setEditingId(''); setSource('manual'); setAiNote(null)
     try { localStorage.removeItem(draftKey) } catch { /* хранилище недоступно */ }
   }
 
@@ -348,6 +375,17 @@ export default function EntryPage() {
             </button>
             <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { onPhoto(e.target.files?.[0]); e.target.value = '' }} />
           </div>
+
+          {(aiBusy || aiNote) && (
+            <div role="status" className={`fx-fade-up flex items-start gap-2 rounded-xl px-3 py-2.5 text-sm ring-1 ${
+              aiBusy ? 'bg-slate-50 text-slate-700 ring-slate-200'
+                : aiNote?.tone === 'good' ? 'bg-emerald-50 text-emerald-900 ring-emerald-200'
+                : aiNote?.tone === 'warn' ? 'bg-amber-50 text-amber-900 ring-amber-200'
+                : 'bg-rose-50 text-rose-900 ring-rose-200'}`}>
+              <span className={`text-base leading-5 ${aiBusy ? 'animate-pulse' : ''}`}>🤖</span>
+              <span>{aiBusy ? L('ИИ смотрит на фото…', 'ЖИ фотоны қарап жатыр…') : aiNote?.text}</span>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-2">
             <label className="block">

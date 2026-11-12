@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { TrustRing, useFreshIds } from '../components/fx'
 import History from '../components/History'
 import { Btn, Card, ErrorBox, PageTitle, Pill, Spinner, StatusBadge, inputCls } from '../components/ui'
 import { dateTime, dmy, monthKey, monthLabel, num, parseYmd, ymd } from '../lib/format'
@@ -34,12 +35,15 @@ export function ReviewList() {
     return () => { supabase.removeChannel(ch) }
   }, [load])
 
+  // Только оформление: отчёт, появившийся в очереди после первой загрузки, въезжает с подсветкой.
+  const isFresh = useFreshIds(rows ? rows.map((r) => r.id) : null)
+
   if (!rows) return <Spinner />
   const queue = rows.filter((r) => r.status === 'submitted' || r.status === 'in_review')
   const done = rows.filter((r) => r.status === 'accepted' || r.status === 'returned')
 
   const Row = ({ r }: { r: (typeof rows)[number] }) => (
-    <Link to={`/review/${r.id}`} className="flex items-center gap-3 border-t border-slate-100 px-4 py-3 first:border-t-0 hover:bg-slate-50">
+    <Link to={`/review/${r.id}`} className={`flex items-center gap-3 border-t border-slate-100 px-4 py-3 transition-colors first:border-t-0 hover:bg-slate-50 ${isFresh(r.id) ? 'fx-slide-in' : ''}`}>
       <div className="min-w-0 flex-1">
         <div className="truncate font-semibold">{name(r.org)}</div>
         <div className="text-sm text-slate-500">
@@ -157,9 +161,7 @@ export function ReviewDetail() {
 
       <Card>
         <div className="flex flex-wrap items-center gap-4">
-          <div className={`grid h-20 w-20 shrink-0 place-items-center rounded-full text-2xl font-bold ring-4 ${trust.level === 'high' ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : trust.level === 'medium' ? 'bg-amber-50 text-amber-700 ring-amber-200' : 'bg-rose-50 text-rose-700 ring-rose-200'}`}>
-            {trust.score}
-          </div>
+          <TrustRing score={trust.score} level={trust.level} />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold">{L('Индекс достоверности', 'Сенімділік индексі')}</h2>
@@ -167,8 +169,8 @@ export function ReviewDetail() {
             </div>
             <p className="text-sm text-slate-500">{L('Автопроверка ищет признаки заполнения «задним числом» и «на глаз». Решение принимает проверяющий.', 'Автотексеру «кейіннен» және «көзбен» толтыру белгілерін іздейді. Шешімді тексеруші қабылдайды.')}</p>
             <ul className="mt-2 space-y-1 text-sm">
-              {trust.reasons.map((r, i) => <li key={i} className="flex gap-2"><span className="font-semibold text-rose-700">−{r.penalty}</span>{L(r.ru, r.kk)}</li>)}
-              {trust.reasons.length === 0 && <li className="text-emerald-700">✓ {L('Замечаний нет: записи вносились в день взвешивания, значения правдоподобны', 'Ескерту жоқ: жазбалар өлшеу күні енгізілген, мәндер шынайы')}</li>}
+              {trust.reasons.map((r, i) => <li key={i} className="fx-fade-up flex gap-2" style={{ animationDelay: `${150 + i * 60}ms` }}><span className="font-semibold text-rose-700">−{r.penalty}</span>{L(r.ru, r.kk)}</li>)}
+              {trust.reasons.length === 0 && <li className="fx-fade-up text-emerald-700" style={{ animationDelay: '150ms' }}>✓ {L('Замечаний нет: записи вносились в день взвешивания, значения правдоподобны', 'Ескерту жоқ: жазбалар өлшеу күні енгізілген, мәндер шынайы')}</li>}
             </ul>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { CountUp, FadeUp, asText, reducedMotion } from '../components/fx'
 import { Card, ErrorBox, Kpi, PageTitle, Pill, Spinner, inputCls } from '../components/ui'
 import { useAuth } from '../lib/auth'
 import { kzt, monthEnd, monthKey, monthLabel, num } from '../lib/format'
@@ -14,6 +15,13 @@ const DAYS_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 const DAYS_KK = ['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сн', 'Жс']
 const DAYS_FULL_RU = ['понедельникам', 'вторникам', 'средам', 'четвергам', 'пятницам', 'субботам', 'воскресеньям']
 const DAYS_FULL_KK = ['дүйсенбі', 'сейсенбі', 'сәрсенбі', 'бейсенбі', 'жұма', 'сенбі', 'жексенбі']
+// Единый вид всплывающих подсказок на графиках.
+const TIP = {
+  contentStyle: { borderRadius: 12, border: 'none', boxShadow: '0 8px 28px rgba(15, 63, 35, 0.16)', fontSize: 12, padding: '8px 12px' },
+  labelStyle: { fontWeight: 600, marginBottom: 2 },
+  itemStyle: { padding: 0 },
+  cursor: { fill: 'rgba(23, 99, 58, 0.06)' },
+}
 
 function Trend({ pct, goodWhenDown = true }: { pct: number | null; goodWhenDown?: boolean }) {
   if (pct === null) return null
@@ -87,6 +95,10 @@ export default function DashboardPage() {
   const landfill = m.tot.mass - m.tot.diverted
   const moved = (m.landfillRecyclable * redirect) / 100
   const fmtKg = (v: number) => `${num(v)} ${L('кг', 'кг')}`
+  // Только оформление: число «докручивается» до значения, единица измерения остаётся как была.
+  const roll = (v: number, digits = 1, unit = '', duration = 400) => asText(<><CountUp value={v} digits={digits} duration={duration} from={0} />{unit}</>)
+  const rollKg = (v: number, duration?: number) => roll(v, 1, ` ${L('кг', 'кг')}`, duration)
+  const anim = !reducedMotion()
 
   return (
     <div className="space-y-4">
@@ -119,34 +131,44 @@ export default function DashboardPage() {
 
       {rows.length === 0 ? <Card>{L('За выбранный период принятых данных нет.', 'Таңдалған кезеңде қабылданған дерек жоқ.')}</Card> : (
         <>
+          <div className="fx-hero fx-fade-up">
+            <div className="text-xs font-semibold uppercase tracking-wide text-white/70">{L('Главное за период', 'Кезеңнің басты қорытындысы')}</div>
+            <p className="mt-1 text-lg font-bold leading-snug sm:text-xl">
+              {L(`Предотвратимых отходов — ${num(share(m.tot.avoidable, m.tot.mass), 0)}%: это ${num(m.tot.avoidable)} кг и около ${kzt(m.tot.cost)} за период`,
+                `Алдын алуға болатын қалдық — ${num(share(m.tot.avoidable, m.tot.mass), 0)}%: бұл ${num(m.tot.avoidable)} кг және кезең ішінде шамамен ${kzt(m.tot.cost)}`)}
+            </p>
+            <p className="mt-1 text-sm text-white/80">{L(`Углеродный след всех отходов — ${num(m.tot.co2 / 1000, 2)} т CO₂-экв.`, `Барлық қалдықтың көміртек ізі — ${num(m.tot.co2 / 1000, 2)} т CO₂-бал.`)}</p>
+          </div>
+
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Kpi label={L('Всего отходов', 'Барлық қалдық')} value={m.tot.mass >= 1000 ? `${num(m.tot.mass / 1000, 2)} т` : fmtKg(m.tot.mass)} sub={`${m.tot.count} ${L('взвешиваний', 'өлшеу')}`} />
-            <Kpi tone="rose" label={L('Предотвратимые', 'Алдын алуға болатын')} value={`${num(share(m.tot.avoidable, m.tot.mass), 0)}%`} sub={`${fmtKg(m.tot.avoidable)} — ${L('то, что можно было не выбросить', 'тастамауға болатын еді')}`} />
-            <Kpi tone="amber" label={L('Потери в деньгах', 'Ақшалай шығын')} value={kzt(m.tot.cost)} sub={L('оценка по ценам-допущениям', 'болжамды бағалар бойынша')} />
-            <Kpi label={L('CO₂-эквивалент', 'CO₂-баламасы')} value={`${num(m.tot.co2 / 1000, 2)} т`} sub={L('2,5 кг CO₂-экв. на кг пищи (FAO, 2013)', '1 кг тағамға 2,5 кг CO₂-бал. (FAO, 2013)')} />
-            <Kpi tone="green" label={L('Пригодно к переработке', 'Қайта өңдеуге жарамды')} value={`${num(share(m.tot.recyclable, m.tot.mass), 0)}%`} sub={fmtKg(m.tot.recyclable)} />
-            <Kpi label={L('Реально переработано', 'Нақты қайта өңделді')} value={`${num(share(m.tot.diverted, m.tot.mass), 0)}%`} sub={L('по способу утилизации', 'кәдеге жарату тәсілі бойынша')} />
-            <Kpi label={L('Граммов на порцию', 'Бір порцияға грамм')} value={m.gpp.overall === null ? '—' : `${num(m.gpp.overall, 0)} г`} sub={m.gppAvoid.overall === null ? L('нет данных о порциях', 'порция туралы дерек жоқ') : `${L('предотвратимых', 'алдын алуға болатын')}: ${num(m.gppAvoid.overall, 0)} г`} />
-            <Kpi tone="green" label={L('Спасено порций', 'Сақталған порция')} value={String(rescue.portions)} sub={`${L('выручка', 'түсім')} ${kzt(rescue.revenue)}`} />
+            <FadeUp i={1} className="grid"><Kpi label={L('Всего отходов', 'Барлық қалдық')} value={m.tot.mass >= 1000 ? roll(m.tot.mass / 1000, 2, ' т') : rollKg(m.tot.mass)} sub={`${m.tot.count} ${L('взвешиваний', 'өлшеу')}`} /></FadeUp>
+            <FadeUp i={2} className="grid"><Kpi tone="rose" label={L('Предотвратимые', 'Алдын алуға болатын')} value={roll(share(m.tot.avoidable, m.tot.mass), 0, '%')} sub={`${fmtKg(m.tot.avoidable)} — ${L('то, что можно было не выбросить', 'тастамауға болатын еді')}`} /></FadeUp>
+            <FadeUp i={3} className="grid"><Kpi tone="amber" label={L('Потери в деньгах', 'Ақшалай шығын')} value={roll(m.tot.cost, 0, ' ₸')} sub={L('оценка по ценам-допущениям', 'болжамды бағалар бойынша')} /></FadeUp>
+            <FadeUp i={4} className="grid"><Kpi label={L('CO₂-эквивалент', 'CO₂-баламасы')} value={roll(m.tot.co2 / 1000, 2, ' т')} sub={L('2,5 кг CO₂-экв. на кг пищи (FAO, 2013)', '1 кг тағамға 2,5 кг CO₂-бал. (FAO, 2013)')} /></FadeUp>
+            <FadeUp i={5} className="grid"><Kpi tone="green" label={L('Пригодно к переработке', 'Қайта өңдеуге жарамды')} value={roll(share(m.tot.recyclable, m.tot.mass), 0, '%')} sub={fmtKg(m.tot.recyclable)} /></FadeUp>
+            <FadeUp i={6} className="grid"><Kpi label={L('Реально переработано', 'Нақты қайта өңделді')} value={roll(share(m.tot.diverted, m.tot.mass), 0, '%')} sub={L('по способу утилизации', 'кәдеге жарату тәсілі бойынша')} /></FadeUp>
+            <FadeUp i={7} className="grid"><Kpi label={L('Граммов на порцию', 'Бір порцияға грамм')} value={m.gpp.overall === null ? '—' : roll(m.gpp.overall, 0, ' г')} sub={m.gppAvoid.overall === null ? L('нет данных о порциях', 'порция туралы дерек жоқ') : `${L('предотвратимых', 'алдын алуға болатын')}: ${num(m.gppAvoid.overall, 0)} г`} /></FadeUp>
+            <FadeUp i={8} className="grid"><Kpi tone="green" label={L('Спасено порций', 'Сақталған порция')} value={roll(rescue.portions, 0)} sub={`${L('выручка', 'түсім')} ${kzt(rescue.revenue)}`} /></FadeUp>
           </div>
 
           {m.last && m.prev && (
-            <Card className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+            <Card className="fx-fade-up fx-d6 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
               <span className="font-semibold">{L('Сравнение периодов', 'Кезеңдерді салыстыру')} — {monthLabel(m.last.month, lang)} {L('к месяцу', '→')} {monthLabel(m.prev.month, lang, false)}:</span>
               <span>{L('вся масса', 'жалпы масса')} <Trend pct={m.monthDelta} /></span>
               <span>{L('предотвратимые', 'алдын алуға болатын')} <Trend pct={m.avoidDelta} /></span>
             </Card>
           )}
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="fx-fade-up fx-d6 grid gap-4 lg:grid-cols-2">
             <Card>
               <h2 className="mb-2 font-bold">{L('Динамика по месяцам, кг', 'Айлар бойынша динамика, кг')}</h2>
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={m.monthly.map((x) => ({ ...x, label: monthLabel(x.month, lang, false) }))}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 12 }} /><YAxis tick={{ fontSize: 12 }} width={44} />
-                  <Tooltip formatter={(v: number) => fmtKg(v)} /><Legend wrapperStyle={{ fontSize: 12 }} />
-                  {(['avoidable', 'unavoidable', 'packaging'] as const).map((k) => <Bar key={k} dataKey={k} stackId="a" fill={C[k]} name={L(...CATEGORY[k])} />)}
+                  <Tooltip {...TIP} formatter={(v: number) => fmtKg(v)} /><Legend wrapperStyle={{ fontSize: 12 }} />
+                  {(['avoidable', 'unavoidable', 'packaging'] as const).map((k, i) => <Bar key={k} dataKey={k} stackId="a" fill={C[k]} name={L(...CATEGORY[k])}
+                    radius={k === 'packaging' ? [6, 6, 0, 0] : undefined} isAnimationActive={anim} animationBegin={i * 120} animationDuration={600} animationEasing="ease-out" />)}
                 </BarChart>
               </ResponsiveContainer>
             </Card>
@@ -155,10 +177,11 @@ export default function DashboardPage() {
               <h2 className="mb-2 font-bold">{L('Структура по видам отходов', 'Қалдық түрлері бойынша құрылым')}</h2>
               <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
-                  <Pie data={pie} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={1}>
+                  <Pie data={pie} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={1} cornerRadius={3}
+                    isAnimationActive={anim} animationBegin={120} animationDuration={600} animationEasing="ease-out">
                     {pie.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
                   </Pie>
-                  <Tooltip formatter={(v: number) => fmtKg(v)} />
+                  <Tooltip {...TIP} formatter={(v: number) => fmtKg(v)} />
                   <Legend layout="vertical" align="right" verticalAlign="middle" wrapperStyle={{ fontSize: 11, maxWidth: '50%' }} formatter={(v: string) => short(v)} />
                 </PieChart>
               </ResponsiveContainer>
@@ -171,8 +194,8 @@ export default function DashboardPage() {
                   <BarChart layout="vertical" data={m.byOrg.map((x) => ({ name: short(orgName(x.name)), value: x.value, gpp: m.gpp.perOrg.get(x.name) }))} margin={{ left: 8 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                     <XAxis type="number" tick={{ fontSize: 12 }} /><YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={(v: number, _n, p) => [`${fmtKg(v)}${p.payload.gpp ? ` · ${num(p.payload.gpp, 0)} ${L('г на порцию', 'г/порция')}` : ''}`, L('Масса', 'Масса')]} />
-                    <Bar dataKey="value" fill="#17633a" radius={[0, 6, 6, 0]} />
+                    <Tooltip {...TIP} formatter={(v: number, _n, p) => [`${fmtKg(v)}${p.payload.gpp ? ` · ${num(p.payload.gpp, 0)} ${L('г на порцию', 'г/порция')}` : ''}`, L('Масса', 'Масса')]} />
+                    <Bar dataKey="value" fill="#17633a" radius={[0, 6, 6, 0]} isAnimationActive={anim} animationBegin={240} animationDuration={600} animationEasing="ease-out" />
                   </BarChart>
                 </ResponsiveContainer>
               </Card>
@@ -184,8 +207,8 @@ export default function DashboardPage() {
                 <BarChart data={m.week.map((w) => ({ name: (lang === 'kk' ? DAYS_KK : DAYS_RU)[w.day], value: Number(w.value.toFixed(1)), peak: w.day === m.peak?.day }))}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} /><YAxis tick={{ fontSize: 12 }} width={44} />
-                  <Tooltip formatter={(v: number) => fmtKg(v)} />
-                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>{m.week.map((w, i) => <Cell key={i} fill={w.day === m.peak?.day ? C.avoidable : '#e7b79f'} />)}</Bar>
+                  <Tooltip {...TIP} formatter={(v: number) => fmtKg(v)} />
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]} isAnimationActive={anim} animationBegin={360} animationDuration={600} animationEasing="ease-out">{m.week.map((w, i) => <Cell key={i} fill={w.day === m.peak?.day ? C.avoidable : '#e7b79f'} />)}</Bar>
                 </BarChart>
               </ResponsiveContainer>
             </Card>
@@ -196,7 +219,7 @@ export default function DashboardPage() {
                 {m.reasons.map((r, i) => (
                   <div key={r.name}>
                     <div className="flex justify-between text-sm"><span>{L(...REASON[r.name])}</span><span className="font-semibold tabular-nums">{fmtKg(r.value)} · {num(share(r.value, m.tot.avoidable), 0)}%</span></div>
-                    <div className="mt-1 h-2 rounded-full bg-slate-100"><div className="h-2 rounded-full" style={{ width: `${share(r.value, m.reasons[0].value)}%`, background: PALETTE[(i + 2) % PALETTE.length] }} /></div>
+                    <div className="mt-1 h-2 rounded-full bg-slate-100"><div className="fx-grow h-2 rounded-full" style={{ animationDelay: `${i * 60}ms`, width: `${share(r.value, m.reasons[0].value)}%`, background: PALETTE[(i + 2) % PALETTE.length] }} /></div>
                   </div>
                 ))}
                 {m.reasons.length === 0 && <p className="text-sm text-slate-400">{L('Причины не указаны', 'Себептер көрсетілмеген')}</p>}
@@ -204,7 +227,7 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="fx-fade-up fx-d6 grid gap-4 lg:grid-cols-2">
             <Card>
               <h2 className="font-bold">{L('Отклонения', 'Ауытқулар')}</h2>
               <p className="mb-2 text-sm text-slate-500">{m.anomalies.month ? `${L('Рост более чем на 20% за', '20%-дан астам өсу:')} ${monthLabel(m.anomalies.month, lang)} ${L('к среднему прошлых месяцев', 'өткен айлардағы орташамен салыстырғанда')}` : L('Нужно минимум два месяца данных', 'Кемінде екі айлық дерек қажет')}</p>
@@ -252,9 +275,9 @@ export default function DashboardPage() {
               <span className="w-14 text-right text-lg font-bold">{redirect}%</span>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
-              <Kpi tone="green" label={L('Уйдёт с захоронения', 'Көмуден алынады')} value={fmtKg(moved)} />
-              <Kpi tone="green" label={L('Захоронение сократится на', 'Көму азаяды')} value={`${num(share(moved, landfill), 0)}%`} />
-              <Kpi label={L('Доля переработки станет', 'Қайта өңдеу үлесі болады')} value={`${num(share(m.tot.diverted + moved, m.tot.mass), 0)}%`} sub={`${L('сейчас', 'қазір')} ${num(share(m.tot.diverted, m.tot.mass), 0)}%`} />
+              <Kpi tone="green" label={L('Уйдёт с захоронения', 'Көмуден алынады')} value={rollKg(moved, 250)} />
+              <Kpi tone="green" label={L('Захоронение сократится на', 'Көму азаяды')} value={roll(share(moved, landfill), 0, '%', 250)} />
+              <Kpi label={L('Доля переработки станет', 'Қайта өңдеу үлесі болады')} value={roll(share(m.tot.diverted + moved, m.tot.mass), 0, '%', 250)} sub={`${L('сейчас', 'қазір')} ${num(share(m.tot.diverted, m.tot.mass), 0)}%`} />
             </div>
           </Card>
         </>

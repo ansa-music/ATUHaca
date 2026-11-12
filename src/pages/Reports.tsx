@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useChangedKeys } from '../components/fx'
 import History from '../components/History'
 import { Btn, Card, ErrorBox, PageTitle, Spinner, StatusBadge } from '../components/ui'
 import { useAuth } from '../lib/auth'
@@ -54,6 +55,9 @@ export default function ReportsPage() {
     if (error) setError(errText(error)); else load()
   }
 
+  // Только оформление: значок статуса подсвечивается, когда статус отчёта изменился.
+  const statusChanged = useChangedKeys(rows ? new Map(rows.map((r) => [r.id, r.status])) : null)
+
   if (!org) return <Card>{L('Организация не назначена.', 'Ұйым тағайындалмаған.')}</Card>
   if (!rows) return <Spinner />
 
@@ -75,10 +79,10 @@ export default function ReportsPage() {
                     {r.submitted_at && ` · ${L('отправлен', 'жіберілді')} ${dateTime(r.submitted_at)}`}
                   </div>
                 </div>
-                <StatusBadge status={r.status} />
+                <span className={`inline-flex shrink-0 rounded-full ${statusChanged(r.id) ? 'fx-flash' : ''}`}><StatusBadge status={r.status} /></span>
               </div>
               {r.comment && (
-                <div className="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-900 ring-1 ring-rose-200">
+                <div className="fx-fade-up mt-2 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-900 ring-1 ring-rose-200">
                   <span className="font-semibold">{L('Комментарий проверяющего', 'Тексерушінің түсініктемесі')}:</span> «{r.comment}»
                 </div>
               )}

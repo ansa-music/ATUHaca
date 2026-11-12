@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Btn, Card, ErrorBox, Pill, Spinner, StatusBadge, inputCls } from '../components/ui'
+import { CountUp, SuccessCheck, useFreshIds } from '../components/fx'
+import { Btn, Card, ErrorBox, Pill, StatusBadge, inputCls } from '../components/ui'
 import { useAuth } from '../lib/auth'
 import { dmy, monthEnd, monthKey, monthLabel, monthStart, num, today } from '../lib/format'
 import { CATEGORY, REASON, useLang } from '../lib/i18n'
@@ -247,9 +248,24 @@ export default function EntryPage() {
   const unitLabel = (u?: string) => (u === 'l' ? L('л', 'л') : L('кг', 'кг'))
   const total = (t: { kg: number; l: number }) => `${num(t.kg)} ${unitLabel('kg')}${t.l ? ` + ${num(t.l)} ${unitLabel('l')}` : ''}`
   const dayEntries = entries.filter((e) => e.entry_date === form.date)
+  // Только оформление: итог с «докручивающимися» числами и отметка только что добавленных строк.
+  const totalFx = (t: { kg: number; l: number }) => <><CountUp value={t.kg} /> {unitLabel('kg')}{t.l ? <> + <CountUp value={t.l} /> {unitLabel('l')}</> : ''}</>
+  const isFresh = useFreshIds(loading ? null : entries.map((e) => e.id))
+  const saved = flash === L('Сохранено', 'Сақталды') || flash === L('Отчёт отправлен на проверку', 'Есеп тексеруге жіберілді')
 
   if (!org) return <Card>{L('Вам ещё не назначена организация. Обратитесь к администратору.', 'Сізге әлі ұйым тағайындалмаған. Әкімшіге хабарласыңыз.')}</Card>
-  if (loading) return <Spinner text={L('Загрузка формы…', 'Форма жүктелуде…')} />
+  if (loading) return (
+    <div className="mx-auto max-w-xl space-y-3" role="status" aria-busy="true" aria-label={L('Загрузка формы…', 'Форма жүктелуде…')}>
+      <div className="fx-shimmer h-7 w-2/3" />
+      <div className="fx-shimmer h-4 w-1/3" />
+      <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
+        <div className="grid grid-cols-2 gap-2">{[0, 1, 2, 3, 4, 5].map((i) => <div key={i} className="fx-shimmer h-14" />)}</div>
+        <div className="fx-shimmer h-[52px]" />
+        <div className="fx-shimmer h-14" />
+      </div>
+      <div className="grid grid-cols-2 gap-3"><div className="fx-shimmer h-[74px]" /><div className="fx-shimmer h-[74px]" /></div>
+    </div>
+  )
 
   return (
     <div className="mx-auto max-w-xl space-y-3">
@@ -262,7 +278,7 @@ export default function EntryPage() {
       </div>
 
       {report?.status === 'returned' && (
-        <div className="rounded-2xl bg-rose-50 p-3 text-sm text-rose-900 ring-1 ring-rose-200">
+        <div className="fx-fade-up rounded-2xl bg-rose-50 p-3 text-sm text-rose-900 ring-1 ring-rose-200">
           <div className="font-semibold">{L('Отчёт возвращён на доработку', 'Есеп пысықтауға қайтарылды')}</div>
           {returnComment && <div className="mt-1">«{returnComment}»</div>}
         </div>
@@ -275,12 +291,12 @@ export default function EntryPage() {
         </div>
       )}
       <ErrorBox>{error}</ErrorBox>
-      {flash && <div className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 ring-1 ring-emerald-200">{flash}</div>}
+      {flash && <div role="status" className="fx-fade-up flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 ring-1 ring-emerald-200">{saved && <SuccessCheck />}{flash}</div>}
 
       {editable && (
         <Card className="space-y-3">
           {scale && (
-            <button onClick={useScale} className="flex w-full items-center justify-between rounded-xl bg-amber-50 px-3 py-2.5 text-left ring-1 ring-amber-300">
+            <button onClick={useScale} className="fx-fade-up fx-pop flex min-h-12 w-full items-center justify-between rounded-xl bg-amber-50 px-3 py-2.5 text-left ring-1 ring-amber-300">
               <span className="text-sm font-medium text-amber-900">⚖️ {L('С весов пришло', 'Таразыдан келді')}: <b>{num(scale.weight, 2)} {unitLabel('kg')}</b></span>
               <span className="text-sm font-semibold text-amber-800">{L('Подставить', 'Қою')}</span>
             </button>
@@ -294,9 +310,9 @@ export default function EntryPage() {
             <div className="grid grid-cols-2 gap-2">
               {types.map((t) => (
                 <button key={t.id} onClick={() => pickType(t)}
-                  className={`min-h-14 rounded-xl px-2.5 py-2 text-left text-sm font-medium leading-tight ring-1 transition ${form.typeId === t.id ? 'bg-brand-700 text-white ring-brand-700' : 'bg-slate-50 text-slate-800 ring-slate-200'}`}>
+                  className={`fx-pop min-h-14 rounded-xl px-2.5 py-2 text-left text-sm font-medium leading-tight ring-1 transition ${form.typeId === t.id ? 'bg-brand-700 text-white ring-brand-700' : 'bg-slate-50 text-slate-800 ring-slate-200'}`}>
                   {name(t)}
-                  <span className={`block text-xs font-normal ${form.typeId === t.id ? 'text-white/75' : 'text-slate-500'}`}>{unitLabel(t.unit)} · {L(...CATEGORY[t.category])}</span>
+                  <span className={`block text-xs font-normal transition-colors ${form.typeId === t.id ? 'text-white/75' : 'text-slate-500'}`}>{unitLabel(t.unit)} · {L(...CATEGORY[t.category])}</span>
                 </button>
               ))}
             </div>
@@ -327,7 +343,7 @@ export default function EntryPage() {
               <input className={`${inputCls} text-2xl font-bold`} inputMode="decimal" placeholder="0,0" value={form.qty}
                 onChange={(e) => { setForm({ ...form, qty: e.target.value.replace(/[^0-9.,]/g, '') }); if (source === 'scale') setSource('manual') }} />
             </label>
-            <button onClick={() => fileRef.current?.click()} className={`h-[52px] rounded-xl px-4 text-2xl ring-1 ${photo ? 'bg-brand-100 ring-brand-500' : 'bg-slate-50 ring-slate-300'}`} title={L('Фото', 'Фото')}>
+            <button onClick={() => fileRef.current?.click()} className={`fx-pop h-[52px] rounded-xl px-4 text-2xl ring-1 ${photo ? 'bg-brand-100 ring-brand-500' : 'bg-slate-50 ring-slate-300'}`} title={L('Фото', 'Фото')}>
               {aiBusy ? '…' : photo ? '✅' : '📷'}
             </button>
             <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { onPhoto(e.target.files?.[0]); e.target.value = '' }} />
@@ -354,7 +370,7 @@ export default function EntryPage() {
               <div className="flex flex-wrap gap-1.5">
                 {REASONS_BY_CATEGORY[selected.category].map((r) => (
                   <button key={r} onClick={() => setForm({ ...form, reason: form.reason === r ? '' : r })}
-                    className={`rounded-full px-3 py-1.5 text-sm ring-1 ${form.reason === r ? 'bg-wheat text-white ring-wheat' : 'bg-white text-slate-700 ring-slate-300'}`}>
+                    className={`fx-pop min-h-10 rounded-full px-3 py-1.5 text-sm ring-1 ${form.reason === r ? 'bg-wheat text-white ring-wheat' : 'bg-white text-slate-700 ring-slate-300'}`}>
                     {L(...REASON[r])}
                   </button>
                 ))}
@@ -363,10 +379,10 @@ export default function EntryPage() {
           )}
 
           <div className="flex gap-2">
-            <Btn size="lg" className="flex-1" onClick={save} disabled={saving || !form.typeId || !form.qty}>
+            <Btn size="lg" className="fx-pop min-h-14 flex-1" onClick={save} disabled={saving || !form.typeId || !form.qty}>
               {editingId ? L('Сохранить изменения', 'Өзгерістерді сақтау') : L('Сохранить запись', 'Жазбаны сақтау')}
             </Btn>
-            {(editingId || form.typeId) && <Btn size="lg" variant="ghost" onClick={reset}>✕</Btn>}
+            {(editingId || form.typeId) && <Btn size="lg" variant="ghost" className="fx-pop min-h-14" onClick={reset}>✕</Btn>}
           </div>
           <p className="text-center text-xs text-slate-400">{L('Ответственный', 'Жауапты')}: {profile?.full_name} · {L('черновик сохраняется автоматически', 'жоба автоматты түрде сақталады')}</p>
         </Card>
@@ -375,11 +391,11 @@ export default function EntryPage() {
       <div className="grid grid-cols-2 gap-3">
         <Card className="!p-3.5">
           <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{L('Итого за', 'Жиыны:')} {dmy(form.date).slice(0, 5)}</div>
-          <div className="mt-1 text-xl font-bold">{total(totals.day)}</div>
+          <div className="mt-1 text-xl font-bold">{totalFx(totals.day)}</div>
         </Card>
         <Card className="!p-3.5">
           <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{L('Итого за месяц', 'Ай бойынша жиыны')}</div>
-          <div className="mt-1 text-xl font-bold">{total(totals.month)}</div>
+          <div className="mt-1 text-xl font-bold">{totalFx(totals.month)}</div>
         </Card>
       </div>
 
@@ -410,7 +426,7 @@ export default function EntryPage() {
         {dayEntries.map((e) => {
           const t = typeById.get(e.waste_type_id)
           return (
-            <div key={e.id} className="flex items-center gap-2 border-t border-slate-100 px-4 py-2 first:border-t-0">
+            <div key={e.id} className={`flex items-center gap-2 border-t border-slate-100 px-4 py-2 first:border-t-0 ${isFresh(e.id) ? 'fx-slide-in' : ''}`}>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{name(t)}</div>
                 <div className="text-xs text-slate-500">
@@ -442,7 +458,7 @@ export default function EntryPage() {
       )}
 
       {editable && (
-        <Btn size="lg" variant="soft" className="w-full" onClick={submit} disabled={entries.length === 0}>
+        <Btn size="lg" variant="soft" className="fx-pop min-h-12 w-full" onClick={submit} disabled={entries.length === 0}>
           {L('Отправить отчёт за месяц на проверку', 'Айлық есепті тексеруге жіберу')} →
         </Btn>
       )}

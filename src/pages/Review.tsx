@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { TrustRing, useFreshIds } from '../components/fx'
 import History from '../components/History'
+import { AiVerdictCard } from '../components/ai/AiCards'
+import { aiReview, type AiReview } from '../components/ai/api'
 import { Btn, Card, ErrorBox, PageTitle, Pill, Spinner, StatusBadge, inputCls } from '../components/ui'
 import { dateTime, dmy, monthKey, monthLabel, num, parseYmd, ymd } from '../lib/format'
 import { useLang } from '../lib/i18n'
@@ -14,7 +16,7 @@ const TONE = { high: 'green', medium: 'amber', low: 'rose' } as const
 /** Очередь проверяющего: отчёты, ждущие решения, и недавно рассмотренные. */
 export function ReviewList() {
   const { L, lang, name } = useLang()
-  const [rows, setRows] = useState<(Report & { org?: Org; count: number })[] | null>(null)
+  const [rows, setRows] = useState<(Report & { org?: Org; count: number; trust_score?: number | null })[] | null>(null)
 
   const load = useCallback(async () => {
     const [{ data: reps }, { data: orgs }] = await Promise.all([
@@ -39,7 +41,9 @@ export function ReviewList() {
   const isFresh = useFreshIds(rows ? rows.map((r) => r.id) : null)
 
   if (!rows) return <Spinner />
-  const queue = rows.filter((r) => r.status === 'submitted' || r.status === 'in_review')
+  // Сначала самые подозрительные: по возрастанию индекса достоверности, отчёты без индекса — в конце.
+  const score = (r: (typeof rows)[number]) => (typeof r.trust_score === 'number' ? r.trust_score : Infinity)
+  const queue = rows.filter((r) => r.status === 'submitted' || r.status === 'in_review').sort((a, b) => score(a) - score(b))
   const done = rows.filter((r) => r.status === 'accepted' || r.status === 'returned')
 
   const Row = ({ r }: { r: (typeof rows)[number] }) => (
@@ -51,6 +55,11 @@ export function ReviewList() {
           {r.submitted_at && ` · ${dateTime(r.submitted_at)}`}
         </div>
       </div>
+      {typeof r.trust_score === 'number' && (r.status === 'submitted' || r.status === 'in_review') && (
+        <span title={L('Индекс достоверности', 'Сенімділік индексі')}>
+          <Pill tone={r.trust_score >= 80 ? 'green' : r.trust_score >= 50 ? 'amber' : 'rose'}>{Math.round(r.trust_score)}</Pill>
+        </span>
+      )}
       <StatusBadge status={r.status} />
     </Link>
   )
@@ -58,7 +67,10 @@ export function ReviewList() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageTitle title={L('Проверка отчётов', 'Есептерді тексеру')} sub={L('Новые отчёты появляются здесь без перезагрузки страницы', 'Жаңа есептер бетті қайта жүктемей-ақ осында пайда болады')} />
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">{L('Ждут решения', 'Шешім күтуде')} · {queue.length}</h2>
+      <h2 className="mb-2 flex flex-wrap items-baseline gap-x-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <span>{L('Ждут решения', 'Шешім күтуде')} · {queue.length}</span>
+        {queue.length > 1 && <span className="text-xs font-medium normal-case tracking-normal text-slate-400">{L('сначала самые подозрительные', 'алдымен ең күдіктілері')}</span>}
+      </h2>
       <Card className="mb-5 !p-0">
         {queue.map((r) => <Row key={r.id} r={r} />)}
         {queue.length === 0 && <div className="px-4 py-6 text-center text-slate-400">{L('Очередь пуста', 'Кезек бос')}</div>}
@@ -85,6 +97,24 @@ export function ReviewDetail() {
   const [busy, setBusy] = useState(false)
   const [version, setVersion] = useState(0)
   const [photo, setPhoto] = useState('')
+  // Заключение ИИ: 'loading' — ждём ответ, null — ИИ недоступен (карточка скрыта).
+  const [ai, setAi] = useState<AiReview | 'loading' | null>('loading')
+
+  useEffect(() => {
+    if (!id) return
+    let alive = true
+    setAi('loading')
+    aiReview(id).then((r) => { if (alive) setAi(r) }).catch(() => { if (alive) setAi(null) })
+    return () => { alive = false }
+  }, [id])
+
+  // Если ИИ советует вернуть — подставляем его готовый комментарий (его можно править).
+  useEffect(() => {
+    if (ai && ai !== 'loading' && ai.verdict === 'return') {
+      const c = lang === 'kk' ? ai.comment_kk || ai.comment_ru : ai.comment_ru
+      if (c) setComment((cur) => cur.trim() ? cur : c)
+    }
+  }, [ai, lang])
 
   const load = useCallback(async () => {
     if (!id) return
@@ -152,12 +182,15 @@ export function ReviewDetail() {
   if (!report || !org || !trust) return error ? <ErrorBox>{error}</ErrorBox> : <Spinner />
   const pending = report.status === 'submitted' || report.status === 'in_review'
   const unit = (id: string) => (types.get(id)?.unit === 'l' ? 'л' : 'кг')
+  const verdict = ai && ai !== 'loading' ? ai.verdict : null
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
       <Link to="/review" className="text-sm font-medium text-brand-700">← {L('К очереди', 'Кезекке')}</Link>
       <PageTitle title={name(org)} sub={`${L('Отчёт за', 'Есеп:')} ${monthLabel(monthKey(report.period_start), lang)} · ${entries.length} ${L('записей', 'жазба')}`} right={<StatusBadge status={report.status} />} />
       <ErrorBox>{error}</ErrorBox>
+
+      {ai && (pending || ai !== 'loading') && <AiVerdictCard ai={ai} />}
 
       <Card>
         <div className="flex flex-wrap items-center gap-4">
@@ -241,6 +274,7 @@ export function ReviewDetail() {
       {pending && (
         <Card className="space-y-3">
           <h2 className="font-bold">{L('Решение', 'Шешім')}</h2>
+          {verdict === 'return' && <p className="text-sm text-slate-500">{L('ИИ подготовил комментарий для возврата. Проверьте и при необходимости исправьте.', 'ЖИ қайтаруға түсініктеме дайындады. Тексеріп, қажет болса түзетіңіз.')}</p>}
           <textarea className={inputCls} rows={3} value={comment} onChange={(e) => setComment(e.target.value)}
             placeholder={L('Комментарий (обязателен при возврате)', 'Түсініктеме (қайтарған кезде міндетті)')} />
           {trust.suggestion && !comment && (
@@ -248,10 +282,22 @@ export function ReviewDetail() {
               ✨ {L('Подставить черновик комментария по замечаниям автопроверки', 'Автотексеру ескертпелері бойынша түсініктеме жобасын қою')}
             </button>
           )}
-          <div className="flex flex-wrap gap-2">
-            <Btn onClick={() => decide(true)} disabled={busy}>✓ {L('Принять отчёт', 'Есепті қабылдау')}</Btn>
-            <Btn variant="danger" onClick={() => decide(false)} disabled={busy}>↩ {L('Вернуть на доработку', 'Пысықтауға қайтару')}</Btn>
-          </div>
+          {verdict === 'accept' ? (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Btn size="lg" className="w-full sm:w-auto" onClick={() => decide(true)} disabled={busy}>✓ {L('Принять отчёт', 'Есепті қабылдау')}</Btn>
+              <Btn size="sm" variant="ghost" onClick={() => decide(false)} disabled={busy}>↩ {L('Вернуть', 'Қайтару')}</Btn>
+            </div>
+          ) : verdict === 'return' ? (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Btn size="lg" variant="danger" className="w-full sm:w-auto" onClick={() => decide(false)} disabled={busy}>↩ {L('Вернуть на доработку', 'Пысықтауға қайтару')}</Btn>
+              <Btn size="sm" variant="ghost" onClick={() => decide(true)} disabled={busy}>✓ {L('Всё же принять', 'Бәрібір қабылдау')}</Btn>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <Btn onClick={() => decide(true)} disabled={busy}>✓ {L('Принять отчёт', 'Есепті қабылдау')}</Btn>
+              <Btn variant="danger" onClick={() => decide(false)} disabled={busy}>↩ {L('Вернуть на доработку', 'Пысықтауға қайтару')}</Btn>
+            </div>
+          )}
         </Card>
       )}
 

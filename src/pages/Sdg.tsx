@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AiInsightCard } from '../components/ai/AiCards'
+import SdgExplainer from '../components/SdgExplainer'
 import { Btn, Card, ErrorBox, PageTitle, Spinner, inputCls } from '../components/ui'
 import { dmy, kzt, monthEnd, monthKey, monthLabel, num, today } from '../lib/format'
 import { useLang } from '../lib/i18n'
@@ -113,6 +114,18 @@ export default function SdgPage() {
     ]
     rows.forEach((r) => ws.addRow(r))
     ws.columns.forEach((c, i) => { c.width = [10, 42, 14, 8, 44][i] })
+    const wi = wb.addWorksheet('О показателях')
+    ;[
+      ['Что такое ЦУР 12.3', 'Задача 12.3 Целей устойчивого развития ООН: к 2030 году вдвое сократить пищевые отходы на душу населения и уменьшить потери продовольствия.'],
+      ['Зачем этот отчёт', 'Данные для рейтингов устойчивого развития (например, THE Impact Rankings по ЦУР 12), ESG-отчётности и выполнения Экологического кодекса РК (сначала предотвращать отходы, затем перерабатывать).'],
+      ['Роль Qadir', 'Точки питания вносят взвешивания со смартфона, проверяющий принимает отчёты, система проверяет достоверность и автоматически считает показатели. Отчёт строится только из принятых отчётов.'],
+      ['Главный показатель', 'Предотвратимые пищевые отходы на одну выданную порцию, г. База — первый месяц учёта; цель 2030 — вдвое меньше базы.'],
+      ['E — экология', 'Образовано отходов, доля предотвратимых, доля пригодных к переработке и фактически переработанных, захоронение, CO2-экв., вода.'],
+      ['S — общество', 'Спасённые порции: остатки дня, проданные студентам со скидкой вместо вывоза.'],
+      ['G — управление', 'Принятые отчёты, сдача в срок, средний индекс достоверности, доля взвешиваний с фото или весов.'],
+      ['Источники коэффициентов', 'FAO, Food Wastage Footprint (2013): 2,5 кг CO2-экв. и ~0,19 м3 воды на 1 кг пищевых отходов. Потери в тенге — допущения.'],
+    ].forEach((r) => { const row = wi.addRow(r); row.getCell(1).font = { bold: true }; row.getCell(2).alignment = { wrapText: true, vertical: 'top' } })
+    wi.getColumn(1).width = 26; wi.getColumn(2).width = 110
     const wo = wb.addWorksheet('По организациям')
     const ho = wo.addRow(['Организация', 'Всего, кг', 'Предотвратимые, %', 'Пригодно к переработке, %', 'Переработано, %', 'CO2-экв., кг', 'Потери, ₸'])
     ho.eachCell((c) => { c.font = head; c.fill = fill })
@@ -162,6 +175,8 @@ export default function SdgPage() {
               {L('Сформировано системой Qadir', 'Qadir жүйесі қалыптастырды')} {dmy(today())} · {L('только отчёты, принятые проверяющим', 'тек тексеруші қабылдаған есептер')} · {L('месяцев с данными', 'деректі айлар')}: {m.months.length} · {L('взвешиваний', 'өлшеу')}: {m.rows.length.toLocaleString('ru-RU')}
             </p>
           </Card>
+
+          <SdgExplainer />
 
           {/* ЦУР 12.3: сократить вдвое */}
           <Card className="bg-gradient-to-br from-brand-800 to-brand-900 text-white print:bg-white print:text-black">

@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { VOICE } from './pitchVoice'
 
 /**
- * Презентация Qadir для защиты — 12 слайдов 16:9 по структуре п. 11.5 регламента.
+ * Презентация Qadir для защиты — 11 слайдов 16:9 по структуре п. 11.5 регламента.
  * Листание: ← → / пробел / клик по краям. F — полный экран. P — печать в PDF (все слайды по одному на страницу).
  * Фоновые ролики сгенерированы в Higgsfield (Seedance 2.5, 480p) и лежат в /public/pitch.
  */
@@ -162,7 +162,7 @@ export default function Pitch() {
             <tbody>
               {[
                 ['Оборудование', 'специальные весы и камеры', 'нет', 'смартфон; весы по желанию (API)'],
-                ['Стоимость', 'подписка + оборудование', 'бесплатно', 'бесплатный пилот, затем подписка'],
+                ['Стоимость', 'подписка + оборудование', 'бесплатно', 'только смартфон, без доп. оборудования'],
                 ['Проверка данных', 'частично', 'нет', 'отчёт + индекс достоверности + ИИ'],
                 ['Отчётность РК, ЦУР 12', 'нет', 'вручную', 'свод по бланкам АТУ, отчёт ЦУР 12.3'],
                 ['Казахский язык', 'нет', '—', 'да'],
@@ -254,29 +254,7 @@ export default function Pitch() {
         </div>
       ),
     },
-    // 8. Бизнес-модель
-    {
-      body: (
-        <div className="flex h-full flex-col justify-center">
-          <Kicker>Бизнес-модель</Kicker>
-          <H>Кто платит и за что</H>
-          <div className="mt-[2cqw] grid grid-cols-3 gap-[1.2cqw]">
-            {[
-              ['Потребители', 'Университеты и колледжи; корпоративные столовые; предприятия Союза пищевых предприятий Казахстана'],
-              ['Модель', 'SaaS-подписка за точку питания в месяц; пилот бесплатно; обучение и интеграция с весами — разово'],
-              ['Ценность', 'Экономия на закупках и вывозе, часы сотрудников, готовая ESG-отчётность и данные для рейтингов'],
-            ].map(([t, d]) => (
-              <div key={t} className="rounded-[1.3cqw] bg-white p-[1.5cqw]" style={{ border: `1px solid ${C.border}` }}>
-                <div className="text-[1.6cqw] font-bold" style={{ color: C.gold }}>{t}</div>
-                <div className="mt-[0.6cqw] text-[1.35cqw] leading-snug" style={{ color: C.ink2 }}>{d}</div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-[1.8cqw] text-[1.4cqw]" style={{ color: C.ink2 }}>Каналы: кафедра ИС и АТУ как первый референс → вузы РК → предприятия через Союз пищевых предприятий.</div>
-        </div>
-      ),
-    },
-    // 9. Экономика
+    // 8. Экономика
     {
       body: (
         <div className="flex h-full flex-col justify-center">
@@ -286,7 +264,7 @@ export default function Pitch() {
             <Stat value={`${fmt(lossYear / 1e6, 1)} млн ₸`} label="потери на еде в год" sub="по ценам-допущениям" />
             <Stat value={`${fmt(saveFood / 1e6, 1)} млн ₸`} label="экономия при −20 % потерь" />
             <Stat value={`${fmt(saveHours / 1e3)} тыс ₸`} label={`${hoursYear} ч сотрудников`} sub="2 500 ₸/ч" />
-            <Stat value={`${fmt(capex / 1e3)} тыс ₸`} label="CAPEX: внедрение, обучение" sub={`OPEX ${fmt(opexYear / 1e3)} тыс ₸/год: хостинг + ИИ`} />
+            <Stat value={`${fmt(capex / 1e3)} тыс ₸`} label="CAPEX: запуск и обучение" sub={`OPEX ${fmt(opexYear / 1e3)} тыс ₸/год: хостинг + ИИ`} />
           </div>
           <div className="mt-[1.8cqw] rounded-[1cqw] px-[1.4cqw] py-[0.9cqw] text-[1.55cqw] font-bold" style={{ background: C.yellow, color: C.ink }}>
             Чистый эффект ≈ {fmt(benefit / 1e6, 1)} млн ₸ в год на 5 точках АТУ
@@ -295,7 +273,7 @@ export default function Pitch() {
         </div>
       ),
     },
-    // 10. Экология
+    // 9. Экология
     {
       video: '/pitch/5.mp4', dark: true,
       body: (
@@ -315,17 +293,17 @@ export default function Pitch() {
         </div>
       ),
     },
-    // 11. Внедрение
+    // 10. Развитие: от смартфона к полной автоматизации
     {
       body: (
         <div className="flex h-full flex-col justify-center">
-          <Kicker>План внедрения</Kicker>
-          <H>Пилот → весь АТУ → другие вузы</H>
+          <Kicker>Развитие решения</Kicker>
+          <H>Следующий шаг — совсем без ручной работы</H>
           <div className="mt-[2.2cqw] grid grid-cols-3 gap-[1.2cqw]">
             {[
-              ['Декабрь 2026', 'Пилот', 'Столовая «Искандер»: обучение 1 час, QR на кухне, замер «бумага против телефона», 1 месяц'],
-              ['I квартал 2027', 'Весь АТУ', '5 точек и кафедры, электронные весы, автоприёмка честных отчётов, первый отчёт ЦУР'],
-              ['2027', 'Масштаб', 'Вузы Алматы и РК, корпоративные столовые, предприятия Союза пищевых предприятий'],
+              ['Уже работает', 'Камера смартфона + ИИ', 'Фото → вид отхода, причина и примерный вес. Человек только подтверждает'],
+              ['Можно подключить', 'Камеры и умные весы', 'Стационарные камеры над контейнерами и весы с API: ИИ сам видит, взвешивает и записывает — ручной ввод не нужен'],
+              ['Дальше', 'Прогноз', 'По накопленным данным ИИ подсказывает, сколько готовить и закупать, — лишняя еда не появляется'],
             ].map(([d, t, x], k) => (
               <div key={t} className="relative rounded-[1.3cqw] bg-white p-[1.5cqw]" style={{ border: `1px solid ${C.border}` }}>
                 <div className="grid h-[3cqw] w-[3cqw] place-items-center rounded-full text-[1.4cqw] font-black" style={{ background: C.yellow, color: C.ink }}>{k + 1}</div>
@@ -336,17 +314,17 @@ export default function Pitch() {
             ))}
           </div>
           <div className="mt-[1.6cqw] text-[1.25cqw]" style={{ color: C.ink2 }}>
-            <b style={{ color: C.ink }}>Риски:</b> сотрудники не вносят данные → вход по QR, фото и голос, напоминания · недостоверные цифры → индекс достоверности и проверка · нет интернета на кухне → черновик сохраняется на телефоне.
+            <b style={{ color: C.ink }}>Почему это реально:</b> приём данных от весов уже есть в системе (API), а распознавание по фото работает сегодня — камере нужно только присылать кадры вместо человека.
           </div>
         </div>
       ),
     },
-    // 12. Команда и запрос
+    // 11. Команда
     {
       video: '/pitch/6.mp4',
       body: (
         <div className="flex h-full flex-col justify-center">
-          <Kicker>Команда и запрос</Kicker>
+          <Kicker>Команда</Kicker>
           <H>Qadir Team</H>
           <div className="mt-[1.6cqw] max-w-[52cqw] space-y-[0.6cqw] text-[1.4cqw]" style={{ color: C.ink2 }}>
             <div><b style={{ color: C.ink }}>Разработка</b> — система, база, ИИ-функции, развёртывание</div>
@@ -354,8 +332,8 @@ export default function Pitch() {
             <div><b style={{ color: C.ink }}>Исследование и экономика</b> — расчёты, ЦУР, презентация</div>
           </div>
           <div className="mt-[2.2cqw] max-w-[52cqw] rounded-[1.3cqw] p-[1.6cqw]" style={{ background: C.yellow }}>
-            <div className="text-[1.8cqw] font-black" style={{ color: C.ink }}>Наш запрос</div>
-            <div className="mt-[0.5cqw] text-[1.4cqw] font-semibold leading-snug" style={{ color: C.ink }}>Пилот в столовой АТУ в декабре · доступ к реальным журналам · поддержка кафедры для внедрения во все подразделения</div>
+            <div className="text-[1.8cqw] font-black" style={{ color: C.ink }}>Qadir — работающее решение проблемы</div>
+            <div className="mt-[0.5cqw] text-[1.4cqw] font-semibold leading-snug" style={{ color: C.ink }}>Измерить → проверить → понять → действовать. Полный цикл ТЗ, ИИ вместо ручной работы, отчёт ЦУР 12.3 одной кнопкой.</div>
           </div>
           <div className="mt-[1.8cqw] text-[1.6cqw] font-bold" style={{ color: C.gold }}>Нанның қадірі. Спасибо!</div>
         </div>
@@ -439,7 +417,8 @@ export default function Pitch() {
     return () => window.removeEventListener('keydown', onKey)
   }, [go, n, printAll, togglePlay])
 
-  const Slide = ({ k }: { k: number }) => (
+  // Функция, а не компонент: иначе при каждом обновлении субтитров React пересоздаёт слайд и видео начинается заново (рывки).
+  const renderSlide = (k: number) => (
     <div className="pitch-slide relative aspect-video w-full overflow-hidden" style={{ background: C.bg, containerType: 'inline-size', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <Bg video={slides[k].video} dark={slides[k].dark} />
       <div className="relative h-full px-[4cqw] py-[3cqw]">{slides[k].body}</div>
@@ -453,7 +432,7 @@ export default function Pitch() {
     return (
       <div className="pitch-print">
         <style>{`@page { size: 16in 9in; margin: 0 } body { margin: 0 } .pitch-print .pitch-slide { width: 16in; height: 9in; page-break-after: always; break-after: page }`}</style>
-        {slides.map((_, k) => <Slide key={k} k={k} />)}
+        {slides.map((_, k) => <div key={k}>{renderSlide(k)}</div>)}
       </div>
     )
   }
@@ -463,7 +442,7 @@ export default function Pitch() {
       <div className="relative w-full max-w-[min(100vw,calc(100vh*16/9))]">
         <AnimatePresence mode="wait">
           <motion.div key={i} initial={{ opacity: 0, scale: 0.985 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
-            <Slide k={i} />
+            {renderSlide(i)}
           </motion.div>
         </AnimatePresence>
         <button aria-label="Назад" className="absolute inset-y-0 left-0 w-[12%] cursor-w-resize" onClick={() => go(-1)} />

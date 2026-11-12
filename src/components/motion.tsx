@@ -68,8 +68,23 @@ export function CountUp({ value, duration = 700, format, className = '' }: { val
       if (t < 1) raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
+    // Страховка: в фоновой вкладке requestAnimationFrame не идёт — тогда показываем итог по таймеру.
+    const done = setTimeout(() => { current.current = to; setShown(to) }, duration + 300)
+    return () => { cancelAnimationFrame(raf); clearTimeout(done) }
   }, [value, duration, inView])
+
+  // Если вкладка в фоне или анимации браузера приостановлены, IntersectionObserver может не сработать.
+  // Тогда число, которое уже находится в пределах экрана, всё равно показывается полностью.
+  useEffect(() => {
+    const to = Number.isFinite(value) ? value : 0
+    const id = setTimeout(() => {
+      if (current.current === to) return
+      const r = ref.current?.getBoundingClientRect()
+      const onScreen = r ? r.bottom > 0 && r.top < window.innerHeight : false
+      if (document.hidden || onScreen) { current.current = to; setShown(to) }
+    }, duration + 600)
+    return () => clearTimeout(id)
+  }, [value, duration, ref])
 
   const fmt = format ?? ((n: number) => Math.round(n).toLocaleString('ru-RU'))
   return <span ref={ref} className={`tnum ${className}`}>{fmt(shown)}</span>

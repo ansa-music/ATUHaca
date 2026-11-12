@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { Btn, Card, ErrorBox, PageTitle, Pill, Spinner, StatusBadge, inputCls } from '../components/ui'
 import { exportSummary, type SummaryBlock } from '../lib/excel'
@@ -77,7 +78,10 @@ export default function SummaryPage() {
   return (
     <div>
       <PageTitle title={L('Сводный отчёт', 'Жиынтық есеп')} sub={title}
-        right={<Btn onClick={download} disabled={busy || rows.length === 0}>⬇ {L('Скачать Excel', 'Excel жүктеу')}</Btn>} />
+        right={<div className="flex flex-wrap gap-2">
+          <Link to="/sdg"><Btn variant="soft">🌍 {L('Отчёт ЦУР 12.3', 'ТДМ 12.3 есебі')}</Btn></Link>
+          <Btn onClick={download} disabled={busy || rows.length === 0}>⬇ {L('Скачать Excel', 'Excel жүктеу')}</Btn>
+        </div>} />
 
       <Card className="mb-4">
         <div className="flex flex-wrap items-center gap-2">

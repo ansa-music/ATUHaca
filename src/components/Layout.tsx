@@ -27,6 +27,7 @@ const NAV: Record<Role, Item[]> = {
     { to: '/registry', ru: 'Реестр', kk: 'Тізілім', icon: 'folder' },
     { to: '/summary', ru: 'Свод', kk: 'Жиынтық', icon: 'document' },
     { to: '/dashboard', ru: 'Аналитика', kk: 'Аналитика', icon: 'chart' },
+    { to: '/sdg', ru: 'ЦУР 12', kk: 'ТДМ 12', icon: 'globe' },
   ],
   management: [
     { to: '/dashboard', ru: 'Аналитика', kk: 'Аналитика', icon: 'chart' },

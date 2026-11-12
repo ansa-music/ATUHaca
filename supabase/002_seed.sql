@@ -1,5 +1,5 @@
 -- Qadir — демо-данные: 5 организаций АТУ по образцам ТЗ, демо-логины по ролям,
--- взвешивания с 1 июля 2026 по вчерашний день. Запускать после 001_schema.sql.
+-- взвешивания с 1 июля 2026 по вчерашний день. Порядок: 001_schema.sql → 002_seed.sql → 003_automations.sql.
 -- Файл можно запускать повторно: он очищает данные Qadir и создаёт их заново.
 --
 -- Демо-логины (пароль у всех один, задан ниже в v_pw):
@@ -14,6 +14,11 @@
 --   rector@qadir.kz    — руководство
 
 set search_path = public, extensions;
+-- Во время загрузки демо-данных автоматизации (уведомления, автопроверка) не срабатывают.
+set qadir.seeding = 'on';
+do $$ begin
+  if to_regclass('public.notifications') is not null then truncate public.notifications, public.automation_runs; end if;
+end $$;
 
 truncate public.scale_readings, public.org_secrets, public.surplus_offers, public.daily_portions, public.entry_photos,
   public.status_history, public.entries, public.reports, public.waste_types, public.disposal_methods,
@@ -251,6 +256,13 @@ begin
   insert into surplus_offers (org_id, title, portions, price, old_price, available_until, created_by)
   select o_isk, 'Плов с говядиной, порция', 6, 900, 1800, (current_date + interval '18 hours') at time zone 'Asia/Almaty', p.id
   from profiles p where p.org_id = o_isk;
+end $$;
+
+reset qadir.seeding;
+do $$ begin
+  if to_regprocedure('public.report_trust(uuid)') is not null then
+    execute 'update public.reports set trust_score = public.report_trust(id) where status <> ''draft''';
+  end if;
 end $$;
 
 select o.name_ru as "Организация", count(e.id) as "Записей", min(e.entry_date) as "С", max(e.entry_date) as "По"

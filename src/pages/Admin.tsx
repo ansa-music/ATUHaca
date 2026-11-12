@@ -1,11 +1,12 @@
 import { QRCodeSVG } from 'qrcode.react'
 import { useCallback, useEffect, useState } from 'react'
+import Automations from '../components/Automations'
 import { Btn, Card, ErrorBox, PageTitle, Pill, Spinner, inputCls } from '../components/ui'
 import { CATEGORY, ORG_TYPE, ROLE, useLang } from '../lib/i18n'
 import { errText, supabase } from '../lib/supabase'
 import type { Category, Disposal, Org, Profile, Role, WasteType } from '../lib/types'
 
-type Tab = 'orgs' | 'users' | 'waste' | 'disposal'
+type Tab = 'auto' | 'orgs' | 'users' | 'waste' | 'disposal'
 const cell = `${inputCls} !py-1.5 text-sm`
 
 /** Администрирование: организации (с QR-кодами форм), пользователи, справочники. Новые организации подключаются без изменения кода. */
@@ -58,7 +59,7 @@ export default function AdminPage() {
   if (loading) return <Spinner />
   const origin = window.location.origin
   const formUrl = (o: Org) => (o.is_demo ? `${origin}/login?guest=1` : `${origin}/entry?org=${o.id}`)
-  const tabs: [Tab, string][] = [['orgs', L('Организации', 'Ұйымдар')], ['users', L('Пользователи', 'Пайдаланушылар')], ['waste', L('Виды отходов', 'Қалдық түрлері')], ['disposal', L('Способы утилизации', 'Кәдеге жарату тәсілдері')]]
+  const tabs: [Tab, string][] = [['auto', L('Автоматизации', 'Автоматтандыру')], ['orgs', L('Организации', 'Ұйымдар')], ['users', L('Пользователи', 'Пайдаланушылар')], ['waste', L('Виды отходов', 'Қалдық түрлері')], ['disposal', L('Способы утилизации', 'Кәдеге жарату тәсілдері')]]
 
   return (
     <div>
@@ -69,6 +70,8 @@ export default function AdminPage() {
         ))}
       </div>
       <div className="mb-3"><ErrorBox>{error}</ErrorBox></div>
+
+      {tab === 'auto' && <Automations />}
 
       {tab === 'orgs' && (
         <div className="space-y-3">

@@ -5,20 +5,145 @@
   --color-brand-50: #f1f8f3;
   --color-brand-100: #dcefe1;
   --color-brand-200: #b9dfc5;
+  --color-brand-300: #8cc9a1;
+  --color-brand-400: #55ab77;
   --color-brand-500: #2f8f57;
   --color-brand-600: #1f7a45;
   --color-brand-700: #17633a;
   --color-brand-800: #14532d;
   --color-brand-900: #0f3f23;
+  --color-brand-950: #0a2a18;
   --color-wheat: #c98a1b;
+  --color-wheat-light: #e9b958;
+  --color-wheat-soft: #fbf1dc;
+  --color-paper: #f7f6f1;
+  --color-ink: #1c2520;
+
+  --shadow-card: 0 1px 2px rgb(20 40 28 / 0.05), 0 4px 16px -6px rgb(20 40 28 / 0.08);
+  --shadow-lift: 0 2px 4px rgb(20 40 28 / 0.06), 0 14px 30px -10px rgb(20 40 28 / 0.18);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 html, body, #root { height: 100%; }
-body { background: #f6f7f4; color: #1c2520; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv11", "ss03";
+}
 input, select, textarea, button { font: inherit; }
+button, [role="button"], a { touch-action: manipulation; }
+button:not(:disabled) { cursor: pointer; }
 input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* Единое кольцо фокуса для клавиатуры */
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+.on-dark a:focus-visible, .on-dark button:focus-visible { outline-color: var(--color-wheat-light); }
+
+::selection { background: var(--color-brand-200); color: var(--color-brand-900); }
+
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* ---------- Анимации ---------- */
+
+@keyframes fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes sway { 0%, 100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
+@keyframes draw-line { from { stroke-dashoffset: var(--dash, 1000); } to { stroke-dashoffset: 0; } }
+@keyframes gradient-drift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+@keyframes row-in {
+  0% { opacity: 0; transform: translateY(-28px); background-color: rgb(233 185 88 / 0.38); }
+  45% { opacity: 1; transform: none; background-color: rgb(233 185 88 / 0.38); }
+  100% { opacity: 1; transform: none; background-color: rgb(255 255 255 / 0.06); }
+}
+@keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.8); } }
+@keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.06); } 100% { transform: scale(1); } }
+
+.animate-fade-up { animation: fade-up 0.5s var(--ease-out-soft) both; }
+.animate-fade-in { animation: fade-in 0.3s ease-out both; }
+.animate-sway { animation: sway 7s ease-in-out infinite; transform-origin: 50% 100%; transform-box: fill-box; }
+.animate-draw { stroke-dasharray: var(--dash, 1000); animation: draw-line 0.7s var(--ease-out-soft) both; }
+.animate-row-in { animation: row-in 1.6s var(--ease-out-soft) both; }
+.animate-pulse-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
+.animate-pop { animation: pop 0.4s var(--ease-out-soft); }
+
+/* Переход между страницами: animation-fill-mode backwards, чтобы после анимации не оставался transform
+   (иначе position: fixed у модальных окон внутри страницы считался бы от <main>). */
+.page-enter { animation: fade-up 0.28s var(--ease-out-soft) backwards; }
+
+/* Появление при прокрутке (см. Reveal в components/motion.tsx) */
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.65s var(--ease-out-soft), transform 0.65s var(--ease-out-soft); transition-delay: var(--reveal-delay, 0ms); }
+.reveal.is-in { opacity: 1; transform: none; }
+
+.skeleton {
+  border-radius: 0.6rem;
+  background: linear-gradient(90deg, rgb(20 60 40 / 0.07) 25%, rgb(20 60 40 / 0.14) 37%, rgb(20 60 40 / 0.07) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+.on-dark .skeleton { background-image: linear-gradient(90deg, rgb(255 255 255 / 0.08) 25%, rgb(255 255 255 / 0.18) 37%, rgb(255 255 255 / 0.08) 63%); }
+
+/* Фирменный тёмно-зелёный фон: медленный градиент + зерно */
+.brand-surface {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(120deg, #0a2a18 0%, #14532d 32%, #1f7a45 58%, #17633a 78%, #0f3f23 100%);
+  background-size: 240% 240%;
+  animation: gradient-drift 22s ease-in-out infinite;
+}
+.brand-surface::before {
+  content: "";
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 85% 10%, rgb(233 185 88 / 0.20), transparent 70%),
+    radial-gradient(50% 45% at 5% 95%, rgb(85 171 119 / 0.28), transparent 70%);
+}
+.brand-surface::after {
+  content: "";
+  position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.22; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Схема «Измерить → Проверить → Понять → Действовать» */
+.flow-line { transform: scaleY(0); transform-origin: top; transition: transform 0.4s ease-out; transition-delay: calc(var(--step-delay, 0ms) + 180ms); }
+@media (min-width: 768px) { .flow-line { transform: scaleX(0); transform-origin: left; } }
+.is-in .flow-line { transform: none; }
+.flow-step .flow-dot { transition: background-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease, transform 0.4s var(--ease-out-soft); transition-delay: var(--step-delay, 0ms); }
+.flow-step .flow-text { opacity: 0.35; transition: opacity 0.5s ease; transition-delay: var(--step-delay, 0ms); }
+.is-in .flow-step .flow-dot { background-color: var(--color-brand-700); color: #fff; box-shadow: 0 0 0 6px var(--color-brand-100); transform: scale(1.04); }
+.is-in .flow-step .flow-text { opacity: 1; }
+
+/* Кольцо индекса достоверности и полосы в мини-макетах */
+.ring-progress { stroke-dasharray: var(--ring-len); stroke-dashoffset: var(--ring-len); transition: stroke-dashoffset 1.2s var(--ease-out-soft) 0.2s; }
+.is-in .ring-progress { stroke-dashoffset: var(--ring-off); }
+.bar-grow { transform: scaleX(0); transform-origin: left; transition: transform 0.9s var(--ease-out-soft); transition-delay: var(--bar-delay, 0.15s); }
+.is-in .bar-grow { transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+  .flow-line, .bar-grow { transform: none; }
+  .flow-step .flow-text { opacity: 1; }
+  .flow-step .flow-dot { background-color: var(--color-brand-700); color: #fff; }
+  .ring-progress { stroke-dashoffset: var(--ring-off); }
+  .animate-draw { stroke-dasharray: none; }
+}
 
 @media print {
   .no-print { display: none !important; }
   body { background: #fff; }
+  .page-enter { animation: none; }
 }

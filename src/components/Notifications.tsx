@@ -108,7 +108,7 @@ export default function Notifications({ tone = 'dark' }: { tone?: 'dark' | 'ligh
         aria-label={L('Уведомления', 'Хабарламалар')}
         aria-expanded={open}
         whileTap={reduce ? undefined : { scale: 0.9 }}
-        className={`relative grid h-9 w-9 place-items-center rounded-lg transition-colors duration-150 ${tone === 'dark' ? 'text-white ring-1 ring-white/30 hover:bg-white/10' : 'text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50'}`}
+        className={`relative grid h-9 w-9 place-items-center rounded-lg transition-colors duration-150 ${tone === 'dark' ? 'text-white ring-1 ring-white/30 hover:bg-white/10' : 'bg-white text-[var(--text-2)] ring-1 ring-[var(--border)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]'}`}
       >
         <motion.svg
           key={toast?.id ?? 'bell'}
@@ -127,7 +127,7 @@ export default function Notifications({ tone = 'dark' }: { tone?: 'dark' | 'ligh
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.3, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 600, damping: 18 }}
-              className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-rose-600 px-1 text-[11px] font-bold text-white shadow-[0_0_0_2px_#14532d,0_4px_10px_-2px_rgb(225_29_72/0.7)]"
+              className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--danger)] px-1 text-[11px] font-bold text-white shadow-[0_0_0_2px_#fff,0_4px_10px_-2px_rgb(196_55_45/0.6)]"
             >
               {unread > 9 ? '9+' : unread}
             </motion.span>

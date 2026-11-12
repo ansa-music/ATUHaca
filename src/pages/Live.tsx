@@ -48,13 +48,13 @@ function Counter({ label, value, format, unit, accent, children, className = '' 
     >
       <AnimatePresence>
         {bump > 0 && !reduce && (
-          <motion.span key={bump} aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_30%_60%,rgb(233_185_88/0.35),transparent_60%)]" initial={{ opacity: 1 }} animate={{ opacity: 0 }} exit={{ opacity: 0 }} transition={{ duration: 1.4 }} />
+          <motion.span key={bump} aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_30%_60%,rgb(255_201_40/0.35),transparent_60%)]" initial={{ opacity: 1 }} animate={{ opacity: 0 }} exit={{ opacity: 0 }} transition={{ duration: 1.4 }} />
         )}
       </AnimatePresence>
       <div className="relative text-xs font-semibold uppercase tracking-[0.14em] text-white/60 lg:text-sm">{label}</div>
       <div
         ref={scope}
-        className={`relative mt-1 origin-left whitespace-nowrap font-extrabold leading-none tracking-tight text-[clamp(2.75rem,7.2vh,6.5rem)] ${accent ? 'text-wheat-light [text-shadow:0_0_40px_rgb(233_185_88/0.45)]' : 'text-white'}`}
+        className={`relative mt-1 origin-left whitespace-nowrap font-extrabold leading-none tracking-tight text-[clamp(2.75rem,7.2vh,6.5rem)] ${accent ? 'text-wheat-light [text-shadow:0_0_40px_rgb(255_201_40/0.45)]' : 'text-white'}`}
       >
         <CountUp value={value} duration={900} format={format} />
         {unit && <span className="ml-2 text-[clamp(1.1rem,2.6vh,2rem)] font-bold text-white/55">{unit}</span>}
@@ -175,10 +175,10 @@ export default function LivePage() {
   const ctl = 'grid h-9 w-9 place-items-center rounded-lg text-white/80 ring-1 ring-white/25 transition duration-150 hover:bg-white/10 hover:text-white active:scale-95'
 
   return (
-    <div className="brand-surface on-dark relative flex min-h-full flex-col overflow-hidden text-white lg:h-screen">
+    <div className="brand-surface-dark on-dark relative flex min-h-full flex-col overflow-hidden text-white lg:h-screen">
       {/* Сцена табло, нарисованная кодом: затемнение, движущаяся сетка, лучи и точки-данные */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgb(10_42_24/0.2),rgb(3_16_9/0.82)_75%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgb(42_33_6/0.2),rgb(16_12_2/0.82)_75%)]" />
         <div className="live-grid absolute inset-0" />
         <div className="light-beam absolute -left-[10%] -top-1/2 h-[160%] w-[38%] bg-gradient-to-b from-wheat-light/15 via-wheat-light/[0.03] to-transparent blur-3xl" />
         <div className="light-beam absolute right-0 -top-1/2 h-[160%] w-[28%] bg-gradient-to-b from-brand-300/15 via-transparent to-transparent blur-3xl" style={{ animationDelay: '-8s' }} />
@@ -193,7 +193,7 @@ export default function LivePage() {
             transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
             style={{ transformOrigin: '50% 90%' }}
           >
-            <Logo size={40} className="shadow-[0_0_30px_-4px_rgb(233_185_88/0.8)]" />
+            <Logo size={44} className="drop-shadow-[0_0_18px_rgb(255_201_40/0.55)]" />
           </motion.span>
           <div className="leading-tight">
             <div className="text-xl font-extrabold tracking-tight lg:text-2xl">Qadir</div>
@@ -244,7 +244,7 @@ export default function LivePage() {
             <div className="relative shrink-0">
               <span aria-hidden="true" className="qr-pulse absolute -inset-1.5 rounded-[1.25rem] ring-2 ring-wheat-light/80" />
               <div className="relative rounded-2xl bg-white p-2.5">
-                <QRCodeSVG value={guestUrl} size={132} level="M" fgColor="#0f3f23" className="block h-24 w-24 lg:h-[min(9rem,17vh)] lg:w-[min(9rem,17vh)]" />
+                <QRCodeSVG value={guestUrl} size={132} level="M" fgColor="#2a2106" className="block h-24 w-24 lg:h-[min(9rem,17vh)] lg:w-[min(9rem,17vh)]" />
               </div>
             </div>
             <div className="min-w-0">

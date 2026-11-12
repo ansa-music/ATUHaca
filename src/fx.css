@@ -6,8 +6,8 @@
   to { opacity: 1; transform: none; }
 }
 @keyframes fx-slide-in {
-  0% { opacity: 0; transform: translateY(-10px); background-color: #dcefe1; }
-  55% { opacity: 1; transform: none; background-color: #dcefe1; }
+  0% { opacity: 0; transform: translateY(-10px); background-color: #fff1c2; }
+  55% { opacity: 1; transform: none; background-color: #fff1c2; }
 }
 @keyframes fx-flash {
   0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(201, 138, 27, 0.55); }
@@ -62,7 +62,7 @@
 /* Заглушка на время загрузки. */
 .fx-shimmer {
   border-radius: 0.75rem;
-  background: linear-gradient(90deg, #e9ece6 25%, #f5f6f2 37%, #e9ece6 63%);
+  background: linear-gradient(90deg, #f6ecd0 25%, #fffaeb 37%, #f6ecd0 63%);
   background-size: 400% 100%;
   animation: fx-shimmer 1.4s linear infinite;
 }

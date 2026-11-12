@@ -46,7 +46,7 @@ export function FinalCta() {
       <h2 className="text-balance text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">{L('Посмотрите Qadir изнутри', 'Qadir-ді ішінен көріңіз')}</h2>
       <p className="mt-3 text-slate-600 sm:text-lg">{L('Гостевой вход для жюри — без регистрации, на демо-данных.', 'Қазыларға қонақ кіру — тіркеусіз, демо-деректермен.')}</p>
       <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-        <Link to="/login?guest=1" className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-700 px-6 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-brand-800 active:scale-[0.97]">
+        <Link to="/login?guest=1" className="inline-flex items-center justify-center gap-2 btn-primary-v2 relative isolate rounded-xl bg-brand-400 px-6 py-3.5 text-base font-semibold text-[#2a1c00] transition hover:bg-brand-300 active:scale-[0.97]">
           {L('Войти как гость жюри', 'Қазылар қонағы ретінде кіру')} <Icon name="arrowRight" size={18} />
         </Link>
         <Link to="/rescue" className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-base font-semibold text-brand-800 ring-1 ring-brand-200 transition hover:bg-brand-50 active:scale-[0.97]">

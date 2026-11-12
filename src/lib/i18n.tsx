@@ -22,11 +22,11 @@ export function LangProvider({ children }: { children: ReactNode }) {
 export const useLang = () => useContext(LangCtx)
 
 export const STATUS: Record<Status, [string, string, string]> = {
-  draft: ['Черновик', 'Жоба', 'bg-slate-100 text-slate-700'],
-  submitted: ['Отправлено', 'Жіберілді', 'bg-blue-100 text-blue-800'],
-  in_review: ['На проверке', 'Тексеруде', 'bg-amber-100 text-amber-800'],
-  accepted: ['Принято', 'Қабылданды', 'bg-emerald-100 text-emerald-800'],
-  returned: ['Возвращено на доработку', 'Пысықтауға қайтарылды', 'bg-rose-100 text-rose-800'],
+  draft: ['Черновик', 'Жоба', 'bg-[var(--surface-3)] text-[var(--text-2)]'],
+  submitted: ['Отправлено', 'Жіберілді', 'bg-[var(--info-soft)] text-[var(--info)]'],
+  in_review: ['На проверке', 'Тексеруде', 'bg-[var(--warn-soft)] text-[var(--warn)]'],
+  accepted: ['Принято', 'Қабылданды', 'bg-[var(--accent-soft)] text-[var(--accent-ink)]'],
+  returned: ['Возвращено на доработку', 'Пысықтауға қайтарылды', 'bg-[var(--danger-soft)] text-[var(--danger)]'],
 }
 
 export const ROLE: Record<Role, [string, string]> = {

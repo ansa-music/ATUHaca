@@ -53,14 +53,14 @@ export default function GrainField({ reduce }: { reduce: boolean }) {
       const sway = Math.sin(time * 0.9 + s.ph + s.x * 0.004) * (10 + s.layer * 6) + Math.sin(time * 2.1 + s.ph) * 2
       const bx = s.x, by = h + 4
       const tx = bx + sway, ty = h - s.h
-      ctx.strokeStyle = `rgba(233,185,88,${s.a * 0.8})`
+      ctx.strokeStyle = `rgba(199,125,20,${s.a * 0.8})`
       ctx.lineWidth = s.w + s.layer * 0.5
       ctx.beginPath()
       ctx.moveTo(bx, by)
       ctx.quadraticCurveTo(bx + sway * 0.2, by - s.h * 0.5, tx, ty)
       ctx.stroke()
       // колос: зёрна ёлочкой вдоль верхушки
-      ctx.fillStyle = `rgba(243,207,126,${s.a})`
+      ctx.fillStyle = `rgba(245,179,1,${s.a})`
       const dx = (tx - (bx + sway * 0.2)) / (s.h * 0.5)
       const ang = Math.atan2(-1, dx) + Math.PI / 2
       const k = 5 + s.layer * 2
@@ -92,7 +92,7 @@ export default function GrainField({ reduce }: { reduce: boolean }) {
         if (g.x < -10) g.x = w + 10
         if (g.x > w + 10) g.x = -10
         const tw = 0.6 + 0.4 * Math.sin(t * 2 + g.ph)
-        ctx.fillStyle = `rgba(243,207,126,${g.a * tw})`
+        ctx.fillStyle = `rgba(245,179,1,${g.a * tw})`
         ctx.beginPath()
         ctx.ellipse(g.x, g.y, g.r * 0.6, g.r, g.rot, 0, Math.PI * 2)
         ctx.fill()

@@ -17,7 +17,8 @@ function useFinePointer() {
   return fine
 }
 
-const CARD_BASE = 'card-v2 rounded-2xl bg-white p-4 shadow-card ring-1 ring-black/5'
+/** Вид q-card из темы: белая поверхность, тёплая граница, радиус 16px, мягкая тень. */
+const CARD_BASE = 'rounded-2xl border border-[var(--border)] bg-white p-4 shadow-[var(--q-shadow-sm)]'
 
 function TiltCard({ children, className }: { children: ReactNode; className: string }) {
   const mx = useMotionValue(0)
@@ -60,16 +61,16 @@ type BtnProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' 
 /** Кнопка: пружинное нажатие и блик — на CSS, чтобы ни одна анимация не задерживала клик. */
 export function Btn({ variant = 'primary', size = 'md', className = '', ...p }: BtnProps) {
   const v = {
-    primary: 'btn-primary-v2 bg-brand-700 text-white hover:bg-brand-800 active:bg-brand-900',
-    soft: 'bg-brand-100 text-brand-800 hover:bg-brand-200 hover:shadow-sm',
-    ghost: 'bg-white text-slate-700 shadow-sm ring-1 ring-slate-300 hover:bg-slate-50 hover:ring-slate-400',
-    danger: 'btn-primary-v2 bg-rose-600 text-white hover:bg-rose-700',
+    primary: 'btn-primary-v2 bg-[var(--accent)] text-[var(--accent-text)] hover:bg-[var(--accent-hover)] active:bg-[var(--accent)]',
+    soft: 'border border-[var(--border)] bg-[var(--surface-2)] text-[var(--text)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-3)]',
+    ghost: 'bg-white text-[var(--text-2)] ring-1 ring-[var(--border)] hover:bg-[var(--surface-2)] hover:text-[var(--text)] hover:ring-[var(--border-strong)]',
+    danger: 'btn-danger-v2 bg-[var(--danger)] text-[var(--on-danger)] hover:brightness-110',
   }[variant]
   const s = { sm: 'min-h-9 px-3 py-1.5 text-sm', md: 'min-h-11 px-4 py-2.5', lg: 'min-h-13 px-5 py-3.5 text-lg' }[size]
   return (
     <button
       {...p}
-      className={`btn-v2 inline-flex items-center justify-center gap-2 rounded-xl font-semibold tracking-[-0.005em] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50 ${v} ${s} ${className}`}
+      className={`btn-v2 inline-flex items-center justify-center gap-2 rounded-xl font-semibold tracking-[-0.005em] focus-visible:outline-3 focus-visible:outline-offset-1 focus-visible:outline-[#ffc928]/60 disabled:cursor-not-allowed disabled:opacity-50 ${v} ${s} ${className}`}
     />
   )
 }
@@ -88,9 +89,9 @@ export function StatusBadge({ status }: { status: Status }) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={reduce ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, scale: 0.85, y: -4 }}
           transition={{ type: 'spring', stiffness: 420, damping: 26 }}
-          className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ring-black/5 ${cls}`}
+          className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold ${cls}`}
         >
-          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current opacity-80" />
           {L(ru, kk)}
         </motion.span>
       </AnimatePresence>
@@ -100,31 +101,31 @@ export function StatusBadge({ status }: { status: Status }) {
 
 export function Pill({ children, tone = 'slate' }: { children: ReactNode; tone?: 'slate' | 'green' | 'amber' | 'rose' | 'blue' }) {
   const c = {
-    slate: 'bg-slate-100 text-slate-700', green: 'bg-emerald-100 text-emerald-800', amber: 'bg-amber-100 text-amber-800',
-    rose: 'bg-rose-100 text-rose-800', blue: 'bg-blue-100 text-blue-800',
+    slate: 'bg-[var(--surface-3)] text-[var(--text-2)]', green: 'bg-[var(--accent-soft)] text-[var(--accent-ink)]', amber: 'bg-[var(--warn-soft)] text-[var(--warn)]',
+    rose: 'bg-[var(--danger-soft)] text-[var(--danger)]', blue: 'bg-[var(--info-soft)] text-[var(--info)]',
   }[tone]
-  return <span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ring-black/5 ${c}`}>{children}</span>
+  return <span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold ${c}`}>{children}</span>
 }
 
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-slate-600">{label}</span>
+      <span className="mb-1.5 block text-sm font-semibold text-[var(--text-2)]">{label}</span>
       {children}
-      {hint && <span className="mt-1 block text-xs text-slate-500">{hint}</span>}
+      {hint && <span className="mt-1 block text-xs text-[var(--muted)]">{hint}</span>}
     </label>
   )
 }
 
 export const inputCls =
-  'input-v2 min-h-11 w-full rounded-xl border border-slate-300 bg-white/95 px-3 py-2.5 outline-none placeholder:text-slate-400 hover:border-slate-400 focus:border-brand-600 focus:bg-white'
+  'input-v2 min-h-11 w-full rounded-[10px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-[var(--text)] outline-none placeholder:text-[var(--muted)] hover:border-[var(--border-strong)] focus:border-[var(--accent)] focus:bg-white'
 
 export function Spinner({ text }: { text?: string }) {
   return (
     <div role="status" className="flex items-center justify-center gap-3 py-10 text-slate-500">
       <span className="relative h-6 w-6">
-        <span className="absolute inset-0 rounded-full border-2 border-brand-200" />
-        <span className="absolute inset-0 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
+        <span className="absolute inset-0 rounded-full border-2 border-brand-100" />
+        <span className="absolute inset-0 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
       </span>
       {text}
     </div>
@@ -145,7 +146,7 @@ export function ErrorBox({ children }: { children: ReactNode }) {
       initial={reduce ? false : { opacity: 0, x: -6 }}
       animate={reduce ? { opacity: 1 } : { opacity: 1, x: [0, -4, 4, -2, 0] }}
       transition={{ duration: 0.35 }}
-      className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-800 ring-1 ring-rose-200"
+      className="rounded-xl bg-[var(--danger-soft)] px-3 py-2 text-sm font-medium text-[var(--danger)] ring-1 ring-[var(--danger)]/30"
     >
       {children}
     </motion.div>
@@ -158,7 +159,7 @@ export function PageTitle({ title, sub, right }: { title: string; sub?: string; 
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <motion.div initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
         <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight text-slate-900 sm:text-[1.7rem]">
-          <span aria-hidden="true" className="h-6 w-1.5 rounded-full bg-gradient-to-b from-wheat-light to-brand-600" />
+          <span aria-hidden="true" className="h-6 w-1.5 rounded-full bg-gradient-to-b from-[#ffc928] to-[#c77d14]" />
           {title}
         </h1>
         {sub && <p className="mt-1 pl-4 text-sm text-slate-500">{sub}</p>}
@@ -170,8 +171,8 @@ export function PageTitle({ title, sub, right }: { title: string; sub?: string; 
 
 export function Kpi({ label, value, sub, tone = 'slate' }: { label: string; value: ReactNode; sub?: string; tone?: 'slate' | 'green' | 'amber' | 'rose' }) {
   const reduce = useReducedMotion()
-  const c = { slate: 'text-slate-900', green: 'text-emerald-700', amber: 'text-amber-700', rose: 'text-rose-700' }[tone]
-  const bar = { slate: 'from-brand-500 to-brand-300', green: 'from-emerald-500 to-emerald-300', amber: 'from-wheat to-wheat-light', rose: 'from-rose-500 to-rose-300' }[tone]
+  const c = { slate: 'text-[var(--text)]', green: 'text-[var(--accent-ink)]', amber: 'text-[var(--warn)]', rose: 'text-[var(--danger)]' }[tone]
+  const bar = { slate: 'from-[#ffc928] to-[#ffe594]', green: 'from-[#f5b301] to-[#ffd54f]', amber: 'from-[#c77d14] to-[#f5b301]', rose: 'from-[#c4372d] to-[#f08a80]' }[tone]
   return (
     <motion.div
       initial={reduce ? false : { opacity: 0, y: 12, scale: 0.98 }}
@@ -180,10 +181,10 @@ export function Kpi({ label, value, sub, tone = 'slate' }: { label: string; valu
       className="grid"
     >
       <Card className="relative overflow-hidden !p-3.5">
-        <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${bar} opacity-80`} />
-        <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
-        <div className={`tnum mt-1 text-2xl font-bold tracking-tight ${c}`}>{value}</div>
-        {sub && <div className="mt-0.5 text-xs text-slate-500">{sub}</div>}
+        <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${bar}`} />
+        <div className="q-label">{label}</div>
+        <div className={`q-num tnum mt-1 text-2xl font-extrabold tracking-tight ${c}`}>{value}</div>
+        {sub && <div className="mt-0.5 text-xs text-[var(--muted)]">{sub}</div>}
       </Card>
     </motion.div>
   )

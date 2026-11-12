@@ -3,6 +3,7 @@ import { useAuth } from '../lib/auth'
 import { ROLE, useLang } from '../lib/i18n'
 import type { Role } from '../lib/types'
 import { Icon, Logo, type IconName } from './Icon'
+import Notifications from './Notifications'
 
 type Item = { to: string; ru: string; kk: string; icon: IconName }
 
@@ -63,28 +64,29 @@ export default function Layout() {
             <Logo size={32} />
             <span className="text-lg font-bold tracking-tight">Qadir</span>
           </Link>
-          <nav className="ml-4 hidden flex-1 gap-1 md:flex">
+          <nav className="ml-2 hidden min-w-0 flex-1 gap-1 md:flex lg:ml-4">
             {items.map((i) => (
-              <NavLink key={i.to} to={i.to} className={({ isActive }) => `flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-150 ${isActive ? 'bg-white/20 text-white' : 'text-white/75 hover:bg-white/10 hover:text-white'}`}>
+              <NavLink key={i.to} to={i.to} title={L(i.ru, i.kk)} className={({ isActive }) => `flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors duration-150 ${isActive ? 'bg-white/20 text-white' : 'text-white/75 hover:bg-white/10 hover:text-white'}`}>
                 <Icon name={i.icon} size={16} />
-                {L(i.ru, i.kk)}
+                <span className="hidden lg:inline">{L(i.ru, i.kk)}</span>
               </NavLink>
             ))}
           </nav>
-          <div className="ml-auto flex items-center gap-3">
-            <div className="hidden text-right text-xs leading-tight sm:block">
-              <div className="font-semibold">{profile.full_name || profile.email}</div>
-              <div className="text-white/70">{L(...ROLE[profile.role])}{org ? ` · ${name(org)}` : ''}</div>
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <div className="hidden max-w-56 text-right text-xs leading-tight xl:block">
+              <div className="truncate font-semibold">{profile.full_name || profile.email}</div>
+              <div className="truncate text-white/70">{L(...ROLE[profile.role])}{org ? ` · ${name(org)}` : ''}</div>
             </div>
+            <Notifications />
             <LangSwitch />
             <button type="button" onClick={signOut} title={L('Выйти', 'Шығу')} className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-white/80 ring-1 ring-white/30 transition duration-150 hover:bg-white/10 hover:text-white active:scale-95">
               <Icon name="logout" size={16} />
-              <span className="hidden sm:inline">{L('Выйти', 'Шығу')}</span>
-              <span className="sr-only sm:hidden">{L('Выйти', 'Шығу')}</span>
+              <span className="hidden xl:inline">{L('Выйти', 'Шығу')}</span>
+              <span className="sr-only xl:hidden">{L('Выйти', 'Шығу')}</span>
             </button>
           </div>
         </div>
-        <div className="mx-auto max-w-6xl truncate px-4 pb-2 text-xs text-white/75 sm:hidden">
+        <div className="mx-auto max-w-6xl truncate px-4 pb-2 text-xs text-white/75 xl:hidden">
           {L(...ROLE[profile.role])}{org ? ` · ${name(org)}` : ''}
         </div>
       </header>

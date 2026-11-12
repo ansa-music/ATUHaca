@@ -33,7 +33,7 @@ function H({ children, dark }: { children: ReactNode; dark?: boolean }) {
 function Stat({ value, label, sub, dark }: { value: string; label: string; sub?: string; dark?: boolean }) {
   return (
     <div className="rounded-[1.2cqw] p-[1.2cqw]" style={{ background: dark ? 'rgba(255,255,255,.1)' : '#fff', border: `1px solid ${dark ? 'rgba(255,255,255,.18)' : C.border}` }}>
-      <div className="text-[3cqw] font-extrabold leading-none tabular-nums" style={{ color: dark ? C.yellow : C.ink }}>{value}</div>
+      <div className="whitespace-nowrap text-[2.6cqw] font-extrabold leading-none tabular-nums" style={{ color: dark ? C.yellow : C.ink }}>{value}</div>
       <div className="mt-[0.5cqw] text-[1.15cqw] font-semibold" style={{ color: dark ? '#fff' : C.ink2 }}>{label}</div>
       {sub && <div className="mt-[0.2cqw] text-[0.95cqw]" style={{ color: dark ? 'rgba(255,255,255,.7)' : C.muted }}>{sub}</div>}
     </div>
@@ -48,7 +48,10 @@ const Bullet = ({ children, dark }: { children: ReactNode; dark?: boolean }) => 
 )
 
 export default function Pitch() {
-  const [i, setI] = useState(0)
+  const [i, setI] = useState(() => {
+    const n = Number(new URLSearchParams(window.location.search).get('slide'))
+    return Number.isFinite(n) && n >= 1 ? n - 1 : 0
+  })
   const [stats, setStats] = useState<Stats | null>(null)
   // ?print=1 — все слайды подряд (для сохранения в PDF без диалога, например headless-браузером).
   const printParam = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('print')
@@ -280,7 +283,7 @@ export default function Pitch() {
           <H>Окупаемость — меньше {paybackMonths < 1 ? 'месяца' : `${Math.ceil(paybackMonths)} мес.`}</H>
           <div className="mt-[2cqw] grid grid-cols-4 gap-[1cqw]">
             <Stat value={`${fmt(lossYear / 1e6, 1)} млн ₸`} label="потери на еде в год" sub="по ценам-допущениям" />
-            <Stat value={`${fmt(saveFood / 1e6, 1)} млн ₸`} label="экономия при −20 % предотвратимых" />
+            <Stat value={`${fmt(saveFood / 1e6, 1)} млн ₸`} label="экономия при −20 % потерь" />
             <Stat value={`${fmt(saveHours / 1e3)} тыс ₸`} label={`${hoursYear} ч сотрудников`} sub="2 500 ₸/ч" />
             <Stat value={`${fmt(capex / 1e3)} тыс ₸`} label="CAPEX: внедрение, обучение" sub={`OPEX ${fmt(opexYear / 1e3)} тыс ₸/год: хостинг + ИИ`} />
           </div>

@@ -1,0 +1,65 @@
+/* Стили публичной главной страницы (Landing). Всё нарисовано кодом, без внешних медиа. */
+
+.lp-root { overflow-x: clip; }
+
+/* Тёмная сцена героя */
+.lp-hero {
+  background:
+    radial-gradient(70% 55% at 78% 12%, rgb(233 185 88 / 0.22), transparent 70%),
+    radial-gradient(60% 50% at 8% 100%, rgb(85 171 119 / 0.25), transparent 70%),
+    linear-gradient(180deg, #06200f 0%, #0a2a18 40%, #0f3f23 100%);
+}
+.lp-grain {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.18; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.lp-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 50% 40%, transparent 55%, rgb(0 0 0 / 0.45) 100%); }
+.lp-gold-text {
+  background: linear-gradient(100deg, #fff 0%, #fbe7b4 35%, #e9b958 55%, #fff 80%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: lp-shine 7s ease-in-out infinite;
+}
+@keyframes lp-shine { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+.lp-scroll-cue { animation: lp-cue 1.8s ease-in-out infinite; }
+@keyframes lp-cue { 0%, 100% { transform: translateY(0); opacity: 0.9; } 50% { transform: translateY(6px); opacity: 0.4; } }
+
+/* Скелетон для живых цифр (свой, чтобы не зависеть от общих стилей) */
+.lp-skel {
+  border-radius: 0.6rem;
+  background: linear-gradient(90deg, rgb(20 60 40 / 0.07) 25%, rgb(20 60 40 / 0.14) 37%, rgb(20 60 40 / 0.07) 63%);
+  background-size: 400% 100%;
+  animation: lp-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes lp-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* Бегущая строка автоматизаций */
+.lp-marquee { mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.lp-marquee-track { display: flex; width: max-content; animation: lp-marquee 38s linear infinite; }
+.lp-marquee:hover .lp-marquee-track { animation-play-state: paused; }
+.lp-marquee-track.is-reverse { animation-direction: reverse; animation-duration: 46s; }
+@keyframes lp-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* Бумажный журнал */
+.lp-paper {
+  background-color: #fffdf6;
+  background-image:
+    linear-gradient(90deg, transparent 38px, rgb(220 80 80 / 0.35) 38px, rgb(220 80 80 / 0.35) 40px, transparent 40px),
+    repeating-linear-gradient(180deg, transparent 0, transparent 31px, rgb(70 110 170 / 0.22) 31px, rgb(70 110 170 / 0.22) 32px);
+}
+.lp-hand { font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", "Marker Felt", cursive; }
+
+/* Мигающий курсор ввода в продуктовом фильме */
+.lp-caret { display: inline-block; width: 2px; height: 1em; margin-left: 2px; background: currentColor; vertical-align: -0.12em; animation: lp-blink 0.9s steps(1) infinite; }
+@keyframes lp-blink { 50% { opacity: 0; } }
+
+.lp-ripple { animation: lp-ripple 0.7s ease-out both; }
+@keyframes lp-ripple { from { transform: scale(0); opacity: 0.55; } to { transform: scale(3.2); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-gold-text, .lp-scroll-cue, .lp-skel, .lp-caret, .lp-ripple { animation: none !important; }
+  .lp-marquee-track { animation: none !important; flex-wrap: wrap; width: auto; justify-content: center; }
+  .lp-marquee { mask-image: none; -webkit-mask-image: none; }
+}
+@media (prefers-reduced-motion: reduce) { .lp-dup { display: none !important; } }

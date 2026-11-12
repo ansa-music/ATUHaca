@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { MotionConfig } from 'motion/react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { Icon } from './components/Icon'
 import Layout from './components/Layout'
@@ -86,6 +87,8 @@ function Fallback() {
 
 export default function App() {
   return (
+    // reducedMotion="user": при системной настройке «меньше движения» motion отключает анимации перемещений
+    <MotionConfig reducedMotion="user">
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginRoute />} />
@@ -108,5 +111,6 @@ export default function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    </MotionConfig>
   )
 }

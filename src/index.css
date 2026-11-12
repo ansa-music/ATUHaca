@@ -19,16 +19,26 @@
   --color-paper: #f7f6f1;
   --color-ink: #1c2520;
 
-  --shadow-card: 0 1px 2px rgb(20 40 28 / 0.05), 0 4px 16px -6px rgb(20 40 28 / 0.08);
-  --shadow-lift: 0 2px 4px rgb(20 40 28 / 0.06), 0 14px 30px -10px rgb(20 40 28 / 0.18);
+  --color-paper-deep: #efece2;
+  --color-moss: #0d2e1c;
+
+  /* Шкала глубины v2: мягкие многослойные тени с зелёным подтоном */
+  --shadow-card: 0 1px 1px rgb(20 40 28 / 0.04), 0 2px 6px -2px rgb(20 40 28 / 0.06), 0 12px 28px -14px rgb(20 40 28 / 0.14);
+  --shadow-lift: 0 2px 4px rgb(20 40 28 / 0.05), 0 10px 22px -8px rgb(20 40 28 / 0.16), 0 28px 48px -22px rgb(20 40 28 / 0.28);
+  --shadow-glow: 0 0 0 1px rgb(233 185 88 / 0.35), 0 8px 30px -6px rgb(233 185 88 / 0.45);
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 html, body, #root { height: 100%; }
 html { scroll-behavior: smooth; }
 body {
-  background: var(--color-paper);
+  background:
+    radial-gradient(1200px 600px at 100% -10%, rgb(233 185 88 / 0.10), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgb(47 143 87 / 0.08), transparent 60%),
+    var(--color-paper);
+  background-attachment: fixed;
   color: var(--color-ink);
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
@@ -127,6 +137,89 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible, summary:focus-v
 .is-in .ring-progress { stroke-dashoffset: var(--ring-off); }
 .bar-grow { transform: scaleX(0); transform-origin: left; transition: transform 0.9s var(--ease-out-soft); transition-delay: var(--bar-delay, 0.15s); }
 .is-in .bar-grow { transform: none; }
+
+/* ---------- Дизайн-система v2 (рабочий интерфейс) ---------- */
+
+h1, h2, h3 { text-wrap: balance; letter-spacing: -0.015em; }
+
+@layer components {
+  /* Карточка: мягкий блик сверху поверх белой подложки */
+  .card-v2 { background-image: linear-gradient(180deg, rgb(255 255 255 / 0.9), rgb(255 255 255 / 0) 40%); }
+  /* Градиентная рамка для главных поверхностей */
+  .ring-gradient {
+    border: 1px solid transparent;
+    background:
+      linear-gradient(#fff, #fffdf8) padding-box,
+      linear-gradient(135deg, rgb(233 185 88 / 0.75), rgb(47 143 87 / 0.35) 45%, rgb(20 83 45 / 0.55)) border-box;
+  }
+  .glass {
+    background: rgb(255 255 255 / 0.72);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    backdrop-filter: blur(14px) saturate(1.4);
+  }
+}
+
+/* Кнопки: пружинное нажатие, блик на основной кнопке. Транзишн не задерживает клик — действие срабатывает сразу. */
+.btn-v2 { position: relative; isolation: isolate; transition: transform 0.35s var(--ease-spring), background-color 0.15s, box-shadow 0.25s, color 0.15s; }
+.btn-v2::before { content: ""; position: absolute; inset: -6px -2px; }
+.btn-v2:enabled:active { transform: scale(0.95); transition-duration: 0.08s; }
+.btn-primary-v2 {
+  overflow: hidden;
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0) 55%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 1px 2px rgb(10 42 24 / 0.25), 0 6px 16px -8px rgb(10 42 24 / 0.6);
+}
+.btn-primary-v2::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgb(255 255 255 / 0.32) 48%, transparent 66%);
+  transform: translateX(-120%);
+}
+@media (hover: hover) {
+  .btn-primary-v2:enabled:hover { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22), 0 0 0 3px rgb(233 185 88 / 0.25), 0 10px 24px -8px rgb(20 83 45 / 0.7); }
+  .btn-primary-v2:enabled:hover::after { transform: translateX(120%); transition: transform 0.8s var(--ease-out-soft); }
+}
+
+/* Поля ввода: мягкое свечение фокуса */
+.input-v2 { transition: border-color 0.15s, box-shadow 0.2s, background-color 0.15s; }
+.input-v2:focus { box-shadow: 0 0 0 4px var(--color-brand-100), 0 6px 18px -10px rgb(31 122 69 / 0.6); }
+
+/* Шапка приложения */
+.shell-header {
+  background:
+    radial-gradient(500px 120px at 15% -40%, rgb(233 185 88 / 0.22), transparent 70%),
+    linear-gradient(100deg, #0d2e1c 0%, #14532d 45%, #17633a 100%);
+}
+.shell-header::after {
+  content: ""; position: absolute; inset: auto 0 0 0; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgb(233 185 88 / 0.6), transparent);
+}
+
+/* Табло: сетка и лучи */
+@keyframes grid-pan { from { background-position: 0 0, 0 0; } to { background-position: 64px 64px, 64px 64px; } }
+.live-grid {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+  animation: grid-pan 18s linear infinite;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 40%, #000 30%, transparent 80%);
+  mask-image: radial-gradient(ellipse at 50% 40%, #000 30%, transparent 80%);
+}
+@keyframes beam { 0%, 100% { opacity: 0.35; transform: translateX(-6%) rotate(-12deg); } 50% { opacity: 0.7; transform: translateX(6%) rotate(-8deg); } }
+.live-card {
+  background: linear-gradient(160deg, rgb(255 255 255 / 0.09), rgb(255 255 255 / 0.025));
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 20px 50px -30px rgb(0 0 0 / 0.8);
+}
+.light-beam { animation: beam 16s ease-in-out infinite; }
+@keyframes qr-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgb(233 185 88 / 0.55), 0 10px 30px -8px rgb(0 0 0 / 0.5); } 60% { box-shadow: 0 0 0 14px rgb(233 185 88 / 0), 0 10px 30px -8px rgb(0 0 0 / 0.5); } }
+.qr-pulse { animation: qr-pulse 2.4s ease-out infinite; }
+@keyframes ping-ring { from { transform: scale(0.6); opacity: 0.9; } to { transform: scale(2.6); opacity: 0; } }
+.ping-ring { animation: ping-ring 1.1s var(--ease-out-soft) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-v2:enabled:active { transform: none; }
+  .btn-primary-v2::after { display: none; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

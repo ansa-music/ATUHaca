@@ -1,0 +1,99 @@
+/* Анимации рабочих экранов Qadir. Подключается из components/fx.tsx.
+   Всё, что реагирует на действие пользователя, длится не дольше 400 мс и не задерживает ввод. */
+
+@keyframes fx-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fx-slide-in {
+  0% { opacity: 0; transform: translateY(-10px); background-color: #dcefe1; }
+  55% { opacity: 1; transform: none; background-color: #dcefe1; }
+}
+@keyframes fx-flash {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(201, 138, 27, 0.55); }
+  35% { transform: scale(1.1); }
+  100% { transform: scale(1); box-shadow: 0 0 0 10px rgba(201, 138, 27, 0); }
+}
+@keyframes fx-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@keyframes fx-ring {
+  from { stroke-dashoffset: var(--fx-c); }
+}
+@keyframes fx-draw {
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes fx-pulse {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes fx-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* Появление блока снизу; задержка для каскада — style={{ animationDelay }} или fx-d1…fx-d6. */
+.fx-fade-up { animation: fx-fade-up 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+.fx-d1 { animation-delay: 50ms; }
+.fx-d2 { animation-delay: 100ms; }
+.fx-d3 { animation-delay: 150ms; }
+.fx-d4 { animation-delay: 200ms; }
+.fx-d5 { animation-delay: 250ms; }
+.fx-d6 { animation-delay: 300ms; }
+
+/* Пружинящее нажатие и плавная смена цвета при выборе. */
+.fx-pop {
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.18s ease, color 0.18s ease,
+    box-shadow 0.18s ease;
+  touch-action: manipulation;
+}
+.fx-pop:active { transform: scale(0.96); transition-duration: 0.06s, 0.18s, 0.18s, 0.18s; }
+.fx-pop:disabled:active { transform: none; }
+
+/* Новая строка списка: въезжает сверху с короткой подсветкой, затем возвращается к своему фону. */
+.fx-slide-in { animation: fx-slide-in 0.4s ease-out; }
+
+/* Подсветка смены статуса. */
+.fx-flash { animation: fx-flash 0.4s ease-out; }
+
+/* Заглушка на время загрузки. */
+.fx-shimmer {
+  border-radius: 0.75rem;
+  background: linear-gradient(90deg, #e9ece6 25%, #f5f6f2 37%, #e9ece6 63%);
+  background-size: 400% 100%;
+  animation: fx-shimmer 1.4s linear infinite;
+}
+
+/* Полоса, растущая слева направо. */
+.fx-grow { transform-origin: left center; animation: fx-grow 0.4s ease-out both; }
+
+/* Кольцо индекса достоверности. */
+.fx-ring-arc {
+  animation: fx-ring 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  transition: stroke-dashoffset 0.4s ease-out, stroke 0.2s ease;
+}
+
+/* Галочка успешного сохранения. */
+.fx-check { animation: fx-pulse 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both; flex: none; }
+.fx-check path { stroke-dasharray: 24; animation: fx-draw 0.26s ease-out 0.1s both; }
+
+/* Главная мысль над показателями аналитики. */
+.fx-hero {
+  border-radius: 1rem;
+  padding: 1rem 1.125rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--color-brand-700, #17633a), var(--color-brand-900, #0f3f23));
+  box-shadow: 0 8px 24px -12px rgba(15, 63, 35, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-fade-up, .fx-slide-in, .fx-flash, .fx-shimmer, .fx-grow, .fx-ring-arc, .fx-check, .fx-check path {
+    animation: none !important;
+    transition: none !important;
+  }
+  .fx-pop { transition: none !important; }
+  .fx-pop:active { transform: none; }
+}

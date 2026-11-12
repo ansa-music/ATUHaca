@@ -22,9 +22,9 @@ const AUTO_MS = 5000
 function ActionCard({ icon, label, hint, active, busy, onClick }: { icon: string; label: string; hint: string; active?: boolean; busy?: boolean; onClick: () => void }) {
   return (
     <button onClick={onClick} disabled={busy}
-      className={`fx-pop flex min-h-28 flex-col items-center justify-center gap-1 rounded-2xl px-1.5 py-3 text-center ring-1 transition disabled:opacity-70 ${active ? 'bg-brand-700 text-white ring-brand-700' : 'bg-brand-50 text-slate-800 ring-brand-200 hover:bg-brand-100'}`}>
+      className={`fx-pop flex min-h-28 min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1.5 py-3 text-center ring-1 transition disabled:opacity-70 ${active ? 'bg-brand-700 text-white ring-brand-700' : 'bg-brand-50 text-slate-800 ring-brand-200 hover:bg-brand-100'}`}>
       <span className={`text-3xl leading-none ${busy ? 'animate-pulse' : ''}`} aria-hidden="true">{icon}</span>
-      <span className="text-sm font-semibold leading-tight">{label}</span>
+      <span className="w-full break-words text-sm font-semibold leading-tight">{label}</span>
       <span className={`text-[11px] leading-tight ${active ? 'text-white/80' : 'text-slate-500'}`}>{hint}</span>
     </button>
   )
@@ -503,7 +503,7 @@ export default function EntryPage() {
           <div>
             <div className="mb-1.5 text-sm font-medium text-slate-600">{L('Как удобнее записать отход?', 'Қалдықты қалай жазған ыңғайлы?')}</div>
             <div className="grid grid-cols-3 gap-2">
-              <ActionCard icon={photo ? '✅' : '📷'} label={L('Сфотографировать', 'Суретке түсіру')} hint={L('ИИ узнает, что это', 'ЖИ не екенін таниды')}
+              <ActionCard icon={photo ? '✅' : '📷'} label={L('Сфото­графировать', 'Суретке түсіру')} hint={L('ИИ узнает, что это', 'ЖИ не екенін таниды')}
                 busy={aiBusy === 'photo'} active={Boolean(photo)} onClick={() => fileRef.current?.click()} />
               <ActionCard icon="🎤" label={L('Сказать или написать', 'Айту не жазу')} hint={L('«хлеб 3 кг»', '«нан 3 келі»')}
                 busy={aiBusy === 'text'} active={panel === 'text'} onClick={() => { setPanel(panel === 'text' ? '' : 'text'); setBatch(null) }} />

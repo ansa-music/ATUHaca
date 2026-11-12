@@ -188,6 +188,9 @@ end $$;
 create trigger entries_check before insert or update on public.entries
   for each row execute function public.check_entry();
 
+-- Триггерные функции не должны вызываться через API напрямую.
+revoke all on function public.check_entry(), public.handle_new_user() from public, anon, authenticated;
+
 -- ---------- Workflow отчёта: только через эти функции ----------
 
 create or replace function public.get_or_create_report(p_month date) returns public.reports

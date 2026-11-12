@@ -132,7 +132,7 @@ export default function DashboardPage() {
 
           {m.last && m.prev && (
             <Card className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
-              <span className="font-semibold capitalize">{monthLabel(m.last.month, lang)} {L('к', '→')} {monthLabel(m.prev.month, lang, false)}:</span>
+              <span className="font-semibold">{L('Сравнение периодов', 'Кезеңдерді салыстыру')} — {monthLabel(m.last.month, lang)} {L('к месяцу', '→')} {monthLabel(m.prev.month, lang, false)}:</span>
               <span>{L('вся масса', 'жалпы масса')} <Trend pct={m.monthDelta} /></span>
               <span>{L('предотвратимые', 'алдын алуға болатын')} <Trend pct={m.avoidDelta} /></span>
             </Card>
@@ -230,8 +230,13 @@ export default function DashboardPage() {
                   <li className="rounded-xl bg-amber-50 px-3 py-2 ring-1 ring-amber-100">📅 {L(`По ${DAYS_FULL_RU[m.peak.day]} предотвратимых отходов на ${num(m.peakPct, 0)}% больше, чем в остальные дни. Сократите выпуск и закупку на этот день.`, `${DAYS_FULL_KK[m.peak.day]} күндері алдын алуға болатын қалдық басқа күндерге қарағанда ${num(m.peakPct, 0)}%-ға көп. Осы күнге өндіріс пен сатып алуды азайтыңыз.`)}</li>
                 )}
                 {m.topAvoid && (
-                  <li className="rounded-xl bg-amber-50 px-3 py-2 ring-1 ring-amber-100">💰 {L(`«${m.topAvoid.name}» — ${num(m.topAvoid.value)} кг и около ${kzt(m.topAvoidCost)} за период. Это главная точка экономии: выставляйте остатки в «Спасённые порции» до конца дня.`, `«${m.topAvoid.name}» — кезең ішінде ${num(m.topAvoid.value)} кг және шамамен ${kzt(m.topAvoidCost)}. Бұл — үнемдеудің басты нүктесі: қалдықтарды күн соңына дейін «Сақталған порцияларға» шығарыңыз.`)}</li>
+                  <li className="rounded-xl bg-amber-50 px-3 py-2 ring-1 ring-amber-100">💰 {L(`«${m.topAvoid.name}» — ${num(m.topAvoid.value)} кг и около ${kzt(m.topAvoidCost)} за период. Это главная точка экономии.`, `«${m.topAvoid.name}» — кезең ішінде ${num(m.topAvoid.value)} кг және шамамен ${kzt(m.topAvoidCost)}. Бұл — үнемдеудің басты нүктесі.`)}</li>
                 )}
+                {m.reasons.filter((r) => share(r.value, m.tot.avoidable) >= 15).map((r) => r.name === 'plate' ? (
+                  <li key={r.name} className="rounded-xl bg-amber-50 px-3 py-2 ring-1 ring-amber-100">🍽️ {L(`Остатки с тарелок — ${num(share(r.value, m.tot.avoidable), 0)}% предотвратимых потерь. Введите половинные порции и пересмотрите блюда, которые чаще не доедают.`, `Табақтағы қалдық — алдын алуға болатын шығынның ${num(share(r.value, m.tot.avoidable), 0)}%-ы. Жарты порция енгізіп, жиі желінбейтін тағамдарды қайта қараңыз.`)}</li>
+                ) : r.name === 'overproduction' ? (
+                  <li key={r.name} className="rounded-xl bg-amber-50 px-3 py-2 ring-1 ring-amber-100">🍲 {L(`Перепроизводство — ${num(share(r.value, m.tot.avoidable), 0)}% предотвратимых потерь. Планируйте выпуск по дням недели, а остатки дня выставляйте в «Спасённые порции».`, `Артық өндіру — алдын алуға болатын шығынның ${num(share(r.value, m.tot.avoidable), 0)}%-ы. Өндірісті апта күндері бойынша жоспарлап, күн соңындағы қалдықты «Сақталған порцияларға» шығарыңыз.`)}</li>
+                ) : null)}
                 {m.landfillRecyclable > 0 && (
                   <li className="rounded-xl bg-emerald-50 px-3 py-2 ring-1 ring-emerald-100">♻️ {L(`${num(m.landfillRecyclable)} кг пригодных к переработке отходов ушло на вывоз ТБО. Направьте их на компост и вторсырьё.`, `Қайта өңдеуге жарамды ${num(m.landfillRecyclable)} кг қалдық ҚТҚ-ға кетті. Оларды компост пен қайталама шикізатқа бағыттаңыз.`)}</li>
                 )}

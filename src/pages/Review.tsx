@@ -42,8 +42,8 @@ export function ReviewList() {
     <Link to={`/review/${r.id}`} className="flex items-center gap-3 border-t border-slate-100 px-4 py-3 first:border-t-0 hover:bg-slate-50">
       <div className="min-w-0 flex-1">
         <div className="truncate font-semibold">{name(r.org)}</div>
-        <div className="text-sm capitalize text-slate-500">
-          {monthLabel(monthKey(r.period_start), lang)} · {r.count} {L('записей', 'жазба')}
+        <div className="text-sm text-slate-500">
+          <span className="capitalize">{monthLabel(monthKey(r.period_start), lang)}</span> · {r.count} {L('записей', 'жазба')}
           {r.submitted_at && ` · ${dateTime(r.submitted_at)}`}
         </div>
       </div>
@@ -76,7 +76,6 @@ export function ReviewDetail() {
   const [types, setTypes] = useState<Map<string, WasteType>>(new Map())
   const [disposals, setDisposals] = useState<Map<string, Disposal>>(new Map())
   const [means, setMeans] = useState<Map<string, number>>(new Map())
-  const [prevTotals, setPrevTotals] = useState<Map<string, number>>(new Map())
   const [comment, setComment] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -107,14 +106,13 @@ export function ReviewDetail() {
       setEntries((es.data ?? []) as Entry[])
       setTypes(new Map(((wt.data ?? []) as WasteType[]).map((t) => [t.id, t])))
       setDisposals(new Map(((dm.data ?? []) as Disposal[]).map((d) => [d.id, d])))
-      // Среднее на запись и средний месячный итог по виду отхода за три предыдущих месяца.
-      const sum = new Map<string, [number, number]>(); const months = new Set<string>()
+      // Среднее на одно взвешивание по виду отхода за три предыдущих месяца.
+      const sum = new Map<string, [number, number]>()
       for (const h of hist.data ?? []) {
         const s = sum.get(h.waste_type_id) ?? [0, 0]
-        sum.set(h.waste_type_id, [s[0] + Number(h.quantity), s[1] + 1]); months.add(String(h.entry_date).slice(0, 7))
+        sum.set(h.waste_type_id, [s[0] + Number(h.quantity), s[1] + 1])
       }
       setMeans(new Map([...sum].map(([k, [q, n]]) => [k, q / n])))
-      setPrevTotals(new Map([...sum].map(([k, [q]]) => [k, q / Math.max(1, months.size)])))
       setVersion((v) => v + 1)
     } catch (err) { setError(errText(err)) }
   }, [id])
@@ -122,10 +120,14 @@ export function ReviewDetail() {
   useEffect(() => { load() }, [load])
 
   const trust = useMemo(() => (report ? trustIndex(entries, report, means, org?.type === 'lab') : null), [entries, report, means, org])
+  // Итог за месяц и среднее на одно взвешивание: среднее не зависит от того, закончился ли месяц.
   const byType = useMemo(() => {
-    const m = new Map<string, number>()
-    for (const e of entries) m.set(e.waste_type_id, (m.get(e.waste_type_id) ?? 0) + Number(e.quantity))
-    return [...m].sort((a, b) => b[1] - a[1])
+    const m = new Map<string, [number, number]>()
+    for (const e of entries) {
+      const v = m.get(e.waste_type_id) ?? [0, 0]
+      m.set(e.waste_type_id, [v[0] + Number(e.quantity), v[1] + 1])
+    }
+    return [...m].map(([id, [q, n]]) => [id, q, q / n] as const).sort((a, b) => b[1] - a[1])
   }, [entries])
 
   async function decide(accept: boolean) {
@@ -179,18 +181,20 @@ export function ReviewDetail() {
             <thead><tr className="text-xs text-slate-500">
               <th className="px-4 py-2 text-left font-medium">{L('Вид отхода', 'Қалдық түрі')}</th>
               <th className="px-3 py-2 text-right font-medium">{L('За месяц', 'Ай бойынша')}</th>
-              <th className="px-3 py-2 text-right font-medium">{L('Среднее за 3 мес.', '3 айдағы орташа')}</th>
+              <th className="px-3 py-2 text-right font-medium">{L('В среднем за взвешивание', 'Бір өлшеуге орташа')}</th>
+              <th className="px-3 py-2 text-right font-medium">{L('Обычно (3 мес.)', 'Әдетте (3 ай)')}</th>
               <th className="px-4 py-2 text-right font-medium">{L('Отклонение', 'Ауытқу')}</th>
             </tr></thead>
             <tbody>
-              {byType.map(([tid, q]) => {
-                const prev = prevTotals.get(tid)
-                const dev = prev ? ((q - prev) / prev) * 100 : null
+              {byType.map(([tid, q, avg]) => {
+                const prev = means.get(tid)
+                const dev = prev ? ((avg - prev) / prev) * 100 : null
                 return (
                   <tr key={tid} className="border-t border-slate-100">
                     <td className="px-4 py-2">{name(types.get(tid))}</td>
                     <td className="px-3 py-2 text-right font-semibold tabular-nums">{num(q)} {unit(tid)}</td>
-                    <td className="px-3 py-2 text-right tabular-nums text-slate-500">{prev ? num(prev) : '—'}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{num(avg, 2)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-slate-500">{prev ? num(prev, 2) : '—'}</td>
                     <td className={`px-4 py-2 text-right font-semibold tabular-nums ${dev !== null && Math.abs(dev) > 25 ? 'text-rose-700' : 'text-slate-500'}`}>{dev === null ? '—' : `${dev > 0 ? '+' : ''}${num(dev, 0)}%`}</td>
                   </tr>
                 )

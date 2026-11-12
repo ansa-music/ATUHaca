@@ -357,14 +357,16 @@ export default function Pitch() {
   const [playing, setPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
   const [subs, setSubs] = useState(true)
+  const [done, setDone] = useState(false)          // фраза слайда закончилась — субтитры скрыты
+  const nextRef = useRef<number | null>(null)
 
   useEffect(() => {
     const a = audioRef.current
     if (!a || !auto) return
-    setWaiting(false); setProgress(0)
+    setWaiting(false); setProgress(0); setDone(false)
     a.src = `/pitch/voice/${i + 1}.mp3`
     const t = setTimeout(() => { a.play().catch(() => setPlaying(false)) }, 700)
-    return () => { clearTimeout(t); a.pause() }
+    return () => { clearTimeout(t); a.pause(); if (nextRef.current) clearTimeout(nextRef.current) }
   }, [i, auto])
 
   // Нет аудиофайла — ведём субтитры по таймеру (≈ скорость речи диктора), показ не останавливается.
@@ -383,9 +385,10 @@ export default function Pitch() {
   }
 
   const onEnded = () => {
-    setPlaying(false); setProgress(1)
+    // Фраза закончилась: субтитры уходят, 3 секунды чистого слайда, затем следующий.
+    setPlaying(false); setProgress(1); setDone(true)
     if (VOICE[i]?.pause) { setWaiting(true); return }
-    if (i < n - 1) setTimeout(() => go(1), 900)
+    if (i < n - 1) nextRef.current = window.setTimeout(() => go(1), 3000)
   }
 
   const start = (withVoice: boolean) => {
@@ -452,17 +455,19 @@ export default function Pitch() {
         </div>
 
         {/* Субтитры: слова подсвечиваются по ходу речи */}
-        {auto && subs && VOICE[i] && (
-          <div className="pointer-events-none absolute inset-x-[6%] bottom-[5%] flex justify-center">
-            <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+        <AnimatePresence>
+        {auto && subs && !done && VOICE[i] && (
+          <motion.div key={`sub${i}`} exit={{ opacity: 0, y: 10, transition: { duration: 0.4 } }} className="pointer-events-none absolute inset-x-[6%] bottom-[5%] flex justify-center">
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
               className="max-w-[90%] rounded-2xl bg-black/70 px-[1.6vw] py-[0.8vw] text-center font-semibold leading-snug backdrop-blur-sm"
               style={{ fontSize: 'clamp(13px, 1.35vw, 26px)' }}>
               {VOICE[i].sub.split(' ').map((w, k, all) => (
                 <span key={k} style={{ color: k < Math.ceil(progress * all.length) ? '#fff' : 'rgba(255,255,255,.45)', transition: 'color .2s' }}>{w} </span>
               ))}
             </motion.div>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
 
         {/* Пауза на живое демо */}
         {auto && waiting && (

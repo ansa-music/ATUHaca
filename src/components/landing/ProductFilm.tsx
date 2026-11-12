@@ -116,7 +116,7 @@ function PhoneScreen({ step, t }: { step: number; t: number }) {
         ) : (
           <motion.div key="done" className="flex flex-1 flex-col items-center justify-center gap-3 p-4 text-center" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease: EASE }}>
             <svg viewBox="0 0 52 52" className="h-16 w-16" aria-hidden="true">
-              <motion.circle cx="26" cy="26" r="24" fill="#17633a" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 18 }} style={{ originX: '50%', originY: '50%' }} />
+              <motion.circle cx="26" cy="26" r="24" fill="#8a5d00" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 18 }} style={{ originX: '50%', originY: '50%' }} />
               <motion.path d="M15 27l7 7 15-16" fill="none" stroke="#fff" strokeWidth="4.500" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.25, duration: 0.45 }} />
             </svg>
             <div className="text-sm font-bold text-slate-900">{L('Сохранено', 'Сақталды')}</div>

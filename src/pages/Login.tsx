@@ -5,7 +5,7 @@ import { Btn, Card, ErrorBox, Field, inputCls } from '../components/ui'
 import { Icon, Logo, type IconName } from '../components/Icon'
 import { LangSwitch } from '../components/Layout'
 import ParticleField from '../components/shell/ParticleField'
-import WheatStalks from '../components/shell/WheatStalks'
+
 import { useLang } from '../lib/i18n'
 import { errText, isConfigured, supabase } from '../lib/supabase'
 
@@ -71,24 +71,24 @@ export default function Login() {
   }
 
   return (
-    <div className="brand-surface on-dark relative flex min-h-full flex-col overflow-hidden">
+    <div className="brand-surface relative flex min-h-full flex-col overflow-hidden">
       {/* Кинематографичный фон, нарисованный кодом: лучи света, плывущие зёрна, колосья */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">
         <div className="light-beam absolute -left-1/4 -top-1/3 h-[140%] w-1/2 bg-gradient-to-b from-wheat-light/25 via-wheat-light/5 to-transparent blur-3xl" />
         <div className="light-beam absolute -right-1/4 -top-1/3 h-[140%] w-1/3 bg-gradient-to-b from-brand-300/20 via-transparent to-transparent blur-3xl" style={{ animationDelay: '-7s' }} />
         <ParticleField variant="grain" />
-        <WheatStalks />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgb(5_25_14/0.55))]" />
+
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgb(255_201_40/0.18))]" />
       </div>
 
       <div className="relative z-10 flex items-center justify-between p-4">
-        <Link to="/" className="flex min-h-10 items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-white/80 transition-colors hover:text-white">
+        <Link to="/" className="flex min-h-10 items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900">
           <Icon name="arrowLeft" size={16} /> {L('О проекте', 'Жоба туралы')}
         </Link>
         <LangSwitch />
       </div>
       <div className="relative z-10 mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-4 pb-10">
-        <motion.div initial={reduce ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }} className="mb-6 text-center text-white">
+        <motion.div initial={reduce ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }} className="mb-6 text-center text-slate-900">
           <motion.div
             className="mb-3 flex justify-center"
             initial={reduce ? false : { scale: 0.4, rotate: -25, opacity: 0 }}
@@ -96,12 +96,12 @@ export default function Login() {
             transition={{ type: 'spring', stiffness: 220, damping: 14, delay: 0.05 }}
           >
             <span className="relative">
-              <span aria-hidden="true" className="absolute -inset-4 rounded-full bg-wheat-light/30 blur-2xl" />
-              <Logo size={64} className="relative shadow-lg" />
+              <span aria-hidden="true" className="absolute -inset-4 rounded-full bg-wheat-light/40 blur-2xl" />
+              <Logo size={72} className="relative" />
             </span>
           </motion.div>
-          <h1 className="bg-gradient-to-b from-white to-wheat-soft bg-clip-text text-4xl font-extrabold tracking-tight text-transparent">Qadir</h1>
-          <p className="mt-1 text-white/80">{L('Нанның қадірі — учёт и сокращение пищевых отходов АТУ', 'Нанның қадірі — АТУ тағам қалдықтарын есепке алу және азайту')}</p>
+          <h1 className="bg-gradient-to-b from-slate-900 to-brand-700 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent">Qadir</h1>
+          <p className="mt-1 text-slate-600">{L('Нанның қадірі — учёт и сокращение пищевых отходов АТУ', 'Нанның қадірі — АТУ тағам қалдықтарын есепке алу және азайту')}</p>
         </motion.div>
 
         <motion.div
@@ -110,14 +110,14 @@ export default function Login() {
           transition={{ type: 'spring', stiffness: 170, damping: 20, delay: 0.1 }}
           style={{ transformPerspective: 1000 }}
         >
-          <Card accent className="!p-5 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.7)]">
+          <Card accent className="!p-5 shadow-[0_30px_80px_-30px_rgb(120_90_0/0.35)]">
             <motion.div variants={list} initial={reduce ? false : 'hidden'} animate="show">
               {!isConfigured && (
                 <div className="mb-3"><ErrorBox>{L('Не задано подключение к Supabase: заполните .env.local', 'Supabase қосылымы берілмеген: .env.local толтырыңыз')}</ErrorBox></div>
               )}
               {params.get('demo') !== null && (
                 <motion.div variants={item} className="mb-4">
-                  <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-wheat">
+                  <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-700">
                     <span className="h-px flex-1 bg-gradient-to-r from-transparent to-wheat/50" />
                     {L('Демо-вход', 'Демо-кіру')}
                     <span className="h-px flex-1 bg-gradient-to-l from-transparent to-wheat/50" />
@@ -169,7 +169,7 @@ export default function Login() {
                 {info && <div className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{info}</div>}
                 <motion.div variants={item}>
                   <Btn type="submit" size="lg" className="w-full" disabled={busy}>
-                    {busy && <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />}
+                    {busy && <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />}
                     {mode === 'in' ? L('Войти', 'Кіру') : L('Зарегистрироваться', 'Тіркелу')}
                   </Btn>
                 </motion.div>

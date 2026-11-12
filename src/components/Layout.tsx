@@ -44,10 +44,10 @@ export function LangSwitch() {
   const { lang, setLang } = useLang()
   return (
     <LayoutGroup id="lang-switch">
-      <div className="relative flex overflow-hidden rounded-lg text-xs font-semibold ring-1 ring-white/30">
+      <div className="relative flex overflow-hidden rounded-[10px] bg-white text-xs font-semibold ring-1 ring-[var(--border)]">
         {(['ru', 'kk'] as const).map((l) => (
-          <button key={l} type="button" onClick={() => setLang(l)} aria-pressed={lang === l} className={`relative min-h-9 px-2.5 py-1.5 transition-colors duration-150 ${lang === l ? 'text-brand-800' : 'text-white/80 hover:bg-white/10'}`}>
-            {lang === l && <motion.span layoutId="lang-pill" transition={SPRING} className="absolute inset-0 bg-white" />}
+          <button key={l} type="button" onClick={() => setLang(l)} aria-pressed={lang === l} className={`relative min-h-9 px-2.5 py-1.5 transition-colors duration-150 ${lang === l ? 'text-[var(--accent-text)]' : 'text-[var(--muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]'}`}>
+            {lang === l && <motion.span layoutId="lang-pill" transition={SPRING} className="absolute inset-0 bg-[var(--accent)]" />}
             <span className="relative">{l === 'ru' ? 'РУ' : 'ҚАЗ'}</span>
           </button>
         ))}
@@ -56,18 +56,12 @@ export function LangSwitch() {
   )
 }
 
-/** Знак в шапке: колос плавно покачивается, при наведении — пружинный отклик. */
+/** Знак в шапке: логотип докручивается при входе и «дышит» (q-logo из темы), при наведении — пружинный отклик. */
 function SwayLogo() {
   const reduce = useReducedMotion()
   return (
-    <motion.span
-      className="inline-grid"
-      animate={reduce ? undefined : { rotate: [-3, 3, -3] }}
-      transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-      whileHover={reduce ? undefined : { scale: 1.08 }}
-      style={{ transformOrigin: '50% 90%' }}
-    >
-      <Logo size={32} className="shadow-[0_4px_14px_-4px_rgb(233_185_88/0.7)]" />
+    <motion.span className="inline-grid" whileHover={reduce ? undefined : { scale: 1.08 }}>
+      <Logo size={36} />
     </motion.span>
   )
 }
@@ -82,7 +76,7 @@ export default function Layout() {
 
   return (
     <div className="flex min-h-full flex-col">
-      <header className="shell-header no-print on-dark sticky top-0 z-20 text-white shadow-[0_8px_24px_-12px_rgb(10_42_24/0.7)]">
+      <header className="shell-header q-header no-print sticky top-0 z-20 text-[var(--text)] shadow-[0_8px_24px_-16px_rgb(120_90_0/0.25)]">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
           <Link to="/" className="flex shrink-0 items-center gap-2 rounded-lg">
             <SwayLogo />
@@ -91,13 +85,11 @@ export default function Layout() {
           <LayoutGroup id="top-nav">
             <nav className="ml-2 hidden min-w-0 flex-1 gap-1 md:flex lg:ml-4">
               {items.map((i) => (
-                <NavLink key={i.to} to={i.to} title={L(i.ru, i.kk)} className={({ isActive }) => `relative flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors duration-150 ${isActive ? 'text-white' : 'text-white/75 hover:bg-white/10 hover:text-white'}`}>
+                <NavLink key={i.to} to={i.to} title={L(i.ru, i.kk)} className={({ isActive }) => `relative flex min-h-10 shrink-0 items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-sm font-semibold transition-colors duration-150 ${isActive ? 'text-[var(--accent-text)]' : 'text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]'}`}>
                   {({ isActive }) => (
                     <>
                       {isActive && (
-                        <motion.span layoutId="nav-active" transition={SPRING} className="absolute inset-0 rounded-lg bg-white/[0.16] shadow-[inset_0_1px_0_rgb(255_255_255/0.18)] ring-1 ring-white/15">
-                          <span className="absolute inset-x-2.5 -bottom-px h-0.5 rounded-full bg-wheat-light shadow-[0_0_10px_rgb(233_185_88/0.9)]" />
-                        </motion.span>
+                        <motion.span layoutId="nav-active" transition={SPRING} className="absolute inset-0 rounded-[10px] bg-[var(--accent)] shadow-[0_4px_12px_-6px_rgb(245_179_1/0.8)]" />
                       )}
                       <Icon name={i.icon} size={16} className="relative" />
                       <span className="relative hidden lg:inline">{L(i.ru, i.kk)}</span>
@@ -110,18 +102,18 @@ export default function Layout() {
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <div className="hidden max-w-56 text-right text-xs leading-tight xl:block">
               <div className="truncate font-semibold">{profile.full_name || profile.email}</div>
-              <div className="truncate text-white/70">{L(...ROLE[profile.role])}{org ? ` · ${name(org)}` : ''}</div>
+              <div className="truncate text-[var(--muted)]">{L(...ROLE[profile.role])}{org ? ` · ${name(org)}` : ''}</div>
             </div>
-            <Notifications />
+            <Notifications tone="light" />
             <LangSwitch />
-            <button type="button" onClick={signOut} title={L('Выйти', 'Шығу')} className="flex min-h-9 items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-white/80 ring-1 ring-white/30 transition duration-150 hover:bg-white/10 hover:text-white active:scale-95">
+            <button type="button" onClick={signOut} title={L('Выйти', 'Шығу')} className="flex min-h-9 items-center gap-1.5 rounded-[10px] bg-white px-2 py-1.5 text-sm text-[var(--text-2)] ring-1 ring-[var(--border)] transition duration-150 hover:bg-[var(--surface-2)] hover:text-[var(--text)] active:scale-95">
               <Icon name="logout" size={16} />
               <span className="hidden xl:inline">{L('Выйти', 'Шығу')}</span>
               <span className="sr-only xl:hidden">{L('Выйти', 'Шығу')}</span>
             </button>
           </div>
         </div>
-        <div className="mx-auto max-w-6xl truncate px-4 pb-2 text-xs text-white/75 xl:hidden">
+        <div className="mx-auto max-w-6xl truncate px-4 pb-2 text-xs text-[var(--muted)] xl:hidden">
           {L(...ROLE[profile.role])}{org ? ` · ${name(org)}` : ''}
         </div>
       </header>
@@ -140,14 +132,14 @@ export default function Layout() {
       </main>
 
       <LayoutGroup id="bottom-nav">
-        <nav className="glass no-print fixed inset-x-0 bottom-0 z-20 flex border-t border-slate-200/80 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-14px_rgb(20_40_28/0.35)] md:hidden">
+        <nav className="no-print fixed inset-x-0 bottom-0 z-20 flex border-t border-[var(--border)] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgb(120_90_0/0.3)] md:hidden">
           {items.map((i) => (
-            <NavLink key={i.to} to={i.to} className={({ isActive }) => `relative flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 py-2 text-[11px] font-medium transition-colors duration-150 active:scale-95 ${isActive ? 'text-brand-800' : 'text-slate-500'}`}>
+            <NavLink key={i.to} to={i.to} className={({ isActive }) => `relative flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 py-2 text-[11px] font-semibold transition-colors duration-150 active:scale-95 ${isActive ? 'text-[var(--text)]' : 'text-[var(--muted)]'}`}>
               {({ isActive }) => (
                 <>
                   {isActive && (
-                    <motion.span layoutId="tab-active" transition={SPRING} className="absolute inset-x-1.5 inset-y-1 rounded-xl bg-brand-100/80">
-                      <span className="absolute left-1/2 top-[-4px] h-0.5 w-8 -translate-x-1/2 rounded-full bg-brand-600" />
+                    <motion.span layoutId="tab-active" transition={SPRING} className="absolute inset-x-1.5 inset-y-1 rounded-xl bg-[var(--accent-soft)]/70">
+                      <span className="absolute left-1/2 top-[-5px] h-[3px] w-8 -translate-x-1/2 rounded-full bg-[var(--accent)]" />
                     </motion.span>
                   )}
                   <motion.span className="relative" animate={reduce ? undefined : { y: isActive ? -1 : 0, scale: isActive ? 1.08 : 1 }} transition={SPRING}>

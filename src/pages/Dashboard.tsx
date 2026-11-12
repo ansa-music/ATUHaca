@@ -10,8 +10,8 @@ import { anomalies, byMonth, byWeekday, delta, gramsPerPortion, groupSum, reason
 import { useRegistry } from '../lib/registry'
 import { supabase } from '../lib/supabase'
 
-const C = { avoidable: '#d9622b', unavoidable: '#2f8f57', packaging: '#6c8fb3' }
-const PALETTE = ['#17633a', '#c98a1b', '#d9622b', '#6c8fb3', '#8a6fb0', '#3a9fa3', '#b0506a', '#7d8a3a', '#94a3b8']
+const C = { avoidable: '#f5b301', unavoidable: '#c77d14', packaging: '#5b4a2e' } // --cat-avoid / --cat-unavoid / --cat-pack
+const PALETTE = ['#c79400', '#f5b301', '#c77d14', '#5b4a2e', '#8a5d00', '#ffd54f', '#1f64b8', '#b45309', '#a8935e']
 const DAYS_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 const DAYS_KK = ['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сн', 'Жс']
 const DAYS_FULL_RU = ['понедельникам', 'вторникам', 'средам', 'четвергам', 'пятницам', 'субботам', 'воскресеньям']
@@ -198,7 +198,7 @@ export default function DashboardPage() {
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                     <XAxis type="number" tick={{ fontSize: 12 }} /><YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 11 }} />
                     <Tooltip {...TIP} formatter={(v: number, _n, p) => [`${fmtKg(v)}${p.payload.gpp ? ` · ${num(p.payload.gpp, 0)} ${L('г на порцию', 'г/порция')}` : ''}`, L('Масса', 'Масса')]} />
-                    <Bar dataKey="value" fill="#17633a" radius={[0, 6, 6, 0]} isAnimationActive={anim} animationBegin={240} animationDuration={600} animationEasing="ease-out" />
+                    <Bar dataKey="value" fill="#c79400" radius={[0, 6, 6, 0]} isAnimationActive={anim} animationBegin={240} animationDuration={600} animationEasing="ease-out" />
                   </BarChart>
                 </ResponsiveContainer>
               </Card>
@@ -211,7 +211,7 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} /><YAxis tick={{ fontSize: 12 }} width={44} />
                   <Tooltip {...TIP} formatter={(v: number) => fmtKg(v)} />
-                  <Bar dataKey="value" radius={[6, 6, 0, 0]} isAnimationActive={anim} animationBegin={360} animationDuration={600} animationEasing="ease-out">{m.week.map((w, i) => <Cell key={i} fill={w.day === m.peak?.day ? C.avoidable : '#e7b79f'} />)}</Bar>
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]} isAnimationActive={anim} animationBegin={360} animationDuration={600} animationEasing="ease-out">{m.week.map((w, i) => <Cell key={i} fill={w.day === m.peak?.day ? C.avoidable : '#ffe594'} />)}</Bar>
                 </BarChart>
               </ResponsiveContainer>
             </Card>

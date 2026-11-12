@@ -103,8 +103,13 @@ export function Icon({ name, size = 20, className = '', ...rest }: { name: IconN
   )
 }
 
-/** Колос — знак Qadir. Рисуется текущим цветом. */
+/** Знак Qadir — теперь тот же логотип-изображение (имя сохранено для совместимости). */
 export function WheatMark({ size = 24, className = '' }: { size?: number; className?: string }) {
+  return <Logo size={size} className={className} />
+}
+
+/** Прежний контурный колос (не используется). */
+export function WheatGlyph({ size = 24, className = '' }: { size?: number; className?: string }) {
   const grain = 'c-3.600.200-5.700-1.900-6-5.500 3.600-.200 5.700 1.900 6 5.500z'
   const grainR = 'c3.600.200 5.700-1.900 6-5.500-3.600-.200-5.700 1.900-6 5.500z'
   return (
@@ -117,14 +122,13 @@ export function WheatMark({ size = 24, className = '' }: { size?: number; classN
   )
 }
 
-/** Логотип: колос на пшеничной плашке. */
+/** Логотип Qadir: круговорот-«Q» с вилкой и листьями (public/logo.png). Докручивается при входе и «дышит» (q-logo). */
 export function Logo({ size = 32, className = '' }: { size?: number; className?: string }) {
   return (
-    <span
-      className={`inline-grid shrink-0 place-items-center bg-gradient-to-br from-wheat-light to-wheat text-white shadow-sm ring-1 ring-black/5 ${className}`}
-      style={{ width: size, height: size, borderRadius: size * 0.28 }}
-    >
-      <WheatMark size={Math.round(size * 0.72)} />
-    </span>
+    <img
+      src="/logo.png" alt="" aria-hidden="true" width={size} height={size} draggable={false}
+      className={`q-logo inline-block shrink-0 select-none object-contain ${className}`}
+      style={{ width: size, height: size }}
+    />
   )
 }

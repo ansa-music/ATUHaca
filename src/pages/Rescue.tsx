@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { LangSwitch } from '../components/Layout'
+import { Logo } from '../components/Icon'
 import { Btn, Card, Pill } from '../components/ui'
 import { kzt } from '../lib/format'
 import { useLang } from '../lib/i18n'
@@ -36,15 +37,15 @@ export default function RescuePage() {
   }
 
   return (
-    <div className="min-h-full bg-brand-800">
+    <div className="brand-surface min-h-full">
       <div className="mx-auto max-w-md px-4 py-5">
-        <div className="mb-5 flex items-center justify-between text-white">
-          <div className="flex items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-lg bg-wheat text-xl">🌾</span><span className="text-xl font-bold">Qadir</span></div>
+        <div className="mb-5 flex items-center justify-between text-slate-900">
+          <div className="flex items-center gap-2"><Logo size={36} /><span className="text-xl font-bold">Qadir</span></div>
           <LangSwitch />
         </div>
-        <h1 className="text-3xl font-bold leading-tight text-white">{L('Спасённые порции', 'Сақталған порциялар')}</h1>
-        <p className="mb-4 mt-1 text-white/80">{L('Свежая еда столовых АТУ со скидкой в конце дня. Купил — значит, не выбросили.', 'АТУ асханаларының жаңа тағамы күн соңында жеңілдікпен. Сатып алдыңыз — демек, тасталмады.')}</p>
-        {msg && <div className="mb-3 rounded-xl bg-white px-3 py-2 text-sm font-medium text-brand-800">{msg}</div>}
+        <h1 className="text-3xl font-bold leading-tight text-slate-900">{L('Спасённые порции', 'Сақталған порциялар')}</h1>
+        <p className="mb-4 mt-1 text-slate-600">{L('Свежая еда столовых АТУ со скидкой в конце дня. Купил — значит, не выбросили.', 'АТУ асханаларының жаңа тағамы күн соңында жеңілдікпен. Сатып алдыңыз — демек, тасталмады.')}</p>
+        {msg && <div className="mb-3 rounded-xl bg-white px-3 py-2 text-sm font-medium text-brand-800 ring-1 ring-brand-200">{msg}</div>}
         <div className="space-y-3">
           {offers.map((o) => (
             <Card key={o.id}>

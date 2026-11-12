@@ -426,3 +426,24 @@ grant execute on function public.claim_offer(uuid) to anon, authenticated;
 do $$ begin
   alter publication supabase_realtime add table public.entries, public.reports, public.scale_readings, public.surplus_offers;
 exception when others then null; end $$;
+
+-- Публичные итоги для главной страницы: анониму отдаются только суммы по принятым отчётам, без записей.
+create or replace function public.public_stats() returns json
+language sql stable security definer set search_path = public as $$
+  select json_build_object(
+    'mass_kg', coalesce(round(sum(e.quantity * w.kg_per_unit)), 0),
+    'avoidable_kg', coalesce(round(sum(e.quantity * w.kg_per_unit) filter (where w.category = 'avoidable')), 0),
+    'recyclable_kg', coalesce(round(sum(e.quantity * w.kg_per_unit) filter (where w.recyclable)), 0),
+    'cost_kzt', coalesce(round(sum(e.quantity * w.cost_per_unit)), 0),
+    'co2_kg', coalesce(round(sum(e.quantity * w.kg_per_unit * w.co2_factor)), 0),
+    'entries', count(*),
+    'months', count(distinct date_trunc('month', e.entry_date)),
+    'orgs', (select count(*) from public.organizations where is_active and not is_demo),
+    'rescued_portions', (select coalesce(sum(sold), 0) from public.surplus_offers)
+  )
+  from public.entries e
+  join public.reports r on r.id = e.report_id and r.status = 'accepted'
+  join public.organizations o on o.id = e.org_id and not o.is_demo
+  join public.waste_types w on w.id = e.waste_type_id
+$$;
+grant execute on function public.public_stats() to anon, authenticated;
